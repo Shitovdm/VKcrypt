@@ -1,0 +1,37 @@
+{
+    "manifest_version": 2,
+    "name" : "VKcrypt", 
+    "version" : "0.5",
+    
+    "options_page": "options.html",
+    "description" : "Protect yourself!",
+    "background": {
+        "scripts": ["js/jquery.min.js","background.js"],
+        "persistent": false
+    },
+    "web_accessible_resources": [
+        "html/inject.html",
+        "css/inject.css",
+        "js/inject.js",
+        "img/*"
+    ],  
+    "browser_action": {
+        "default_title": "VKcrypt",
+        "default_icon": "img/icon.png",
+        "default_popup": "popup.html"
+    },
+    "permissions": [
+        "tabs",
+        "https://*/*",
+        "http://*/*"
+    ],
+    "content_scripts": [
+    {
+      "matches": [ "https://vk.com/*" ],
+      "js": [ "js/jquery.min.js", "background.js", "js/inject.js"],
+      "css" : ["css/inject.css"],
+      "html" : ["html/inject.html"],
+      "run_at": "document_end"
+    }
+  ]
+}
