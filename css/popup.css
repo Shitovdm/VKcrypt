@@ -13,8 +13,6 @@ body{
 .popup-logo h3{
     color: #fff;
     text-align: center!important;
-    margin-bottom: 5px;
-    margin-top: 5px;
 }
 .main div{
     width:100%;
@@ -24,9 +22,7 @@ body{
 .main div:last-child{
     border-bottom: none;
 }
-.popup-logo{
-    padding: 10px 60px 10px 60px;
-}
+
 .popup-description{
     text-align: left;
     padding: 5px;
@@ -45,7 +41,6 @@ div a{
 .popup-action{
     float: left;
     width: 100%;
-    height: 30px;
     line-height: 1.6em;
     padding: 5px 5px 10px 5px;
     cursor: pointer;
