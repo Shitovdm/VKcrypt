@@ -5,6 +5,7 @@ class DOWobjectsActions{
     constructor(){
         console.log("Инициализация расширения...");
         this.sendBTN = null;
+        this.eventListenerFlag = false;
     }
     
     parseSendElement(){
@@ -29,8 +30,43 @@ class DOWobjectsActions{
         };     
     }
     
-    
-    
+    /*
+     * Обрабатывает последнее сообщение.
+     * @returns {undefined}
+     */
+    eventListener(){
+        console.log("Обработка последнего сообщения...");
+        
+        if(!this.eventListenerFlag){
+            this.eventListenerFlag = true;
+            var _Decrypt = new Decrypt;
+            setInterval(function(){     //  Событие на обновление последнего сообщения.
+                
+                var __allMessages = document.getElementsByClassName("im-mess--text");
+                
+                if(__allMessages[__allMessages.length - 1].innerHTML !== this.lastMessage){
+                    this.lastMessage = __allMessages[__allMessages.length - 1].innerHTML;
+                    console.log("Зафиксировано изменение...", this.lastMessage.split("<")[0]);
+                    
+                    //  Здесь следует добавить декодировку найденного нового сообщения.
+                    
+                    //_Decrypt.decryptSomeMessage(); 
+                }else{
+                    
+                }
+                
+                
+            }, 1000);
+            
+            
+            
+
+        }
+        
+        
+        
+        
+    }
 }
 
 
@@ -251,11 +287,17 @@ window.onload = function(){
     var _Decrypt = new Decrypt;
     
     _DOWobjectsActions.parseSendElement();
+    _DOWobjectsActions.eventListener();                     //  Обработчик обновления последнего сообщения.
     var sendBtnMemory = _DOWobjectsActions.sendBTN;
     console.log(sendBtnMemory);
     _DOWobjectsActions.createElement(_Crypt, sendBtnMemory);
     
     
-    _Decrypt.decryptAllMessage();
+    //_Decrypt.decryptAllMessage();                           //  Декодирует все сообщенгия из переписки.
     
 };
+
+
+function onhashchange(){
+    console.log("GHBDTN");
+}
