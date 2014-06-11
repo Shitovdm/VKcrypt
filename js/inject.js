@@ -6,28 +6,35 @@ class DOWobjectsActions{
         console.log("Инициализация расширения...");
         this.sendBTN = null;
         this.eventListenerFlag = false;
+        this.messageCounter = 0;
     }
     
     parseSendElement(){
-        this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
-        this.sendBTN = this.container.children[6];
-        console.log(this.container.children[6]);
-        this.container.removeChild(this.container.children[6]); //  Удаление кнопки отправки.
+        var location = window.location.href; 
+        if(location.split("?")[0] === "https://vk.com/im"){ //  Если эта страница с диалогаями.
+            this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
+            this.sendBTN = this.container.children[6];
+            console.log(this.container.children[6]);
+            this.container.removeChild(this.container.children[6]); //  Удаление кнопки отправки.
+       }     
     }
     
     createElement(_Crypt, sendBTN){
-        //  Создаем новый объект, который встанет на место старого.
-        var cryptButton = document.createElement("button");
-        cryptButton.setAttribute("class","crypt-btn");
-        cryptButton.setAttribute("id","encrypt");
-        cryptButton.setAttribute("title","Отправить зашифрованное сообщение");
-        this.container.appendChild(cryptButton); 
+        var location = window.location.href; 
+        if(location.split("?")[0] === "https://vk.com/im"){ //  Если эта страница с диалогаями.
+            //  Создаем новый объект, который встанет на место старого.
+            var cryptButton = document.createElement("button");
+            cryptButton.setAttribute("class","crypt-btn");
+            cryptButton.setAttribute("id","encrypt");
+            cryptButton.setAttribute("title","Отправить зашифрованное сообщение");
+            this.container.appendChild(cryptButton); 
         
-        var encryptBtn = document.getElementById("encrypt");
-        encryptBtn.onclick = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
-            console.log(sendBTN);
-            _Crypt.encryptMessage(sendBTN);
-        };     
+            var encryptBtn = document.getElementById("encrypt");
+            encryptBtn.onclick = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
+                _Crypt.encryptMessage(sendBTN);
+            };   
+        }
+          
     }
     
     /*
@@ -41,31 +48,36 @@ class DOWobjectsActions{
             this.eventListenerFlag = true;
             var _Decrypt = new Decrypt;
             setInterval(function(){     //  Событие на обновление последнего сообщения.
-                
-                var __allMessages = document.getElementsByClassName("im-mess--text");
-                
-                if(__allMessages[__allMessages.length - 1].innerHTML !== this.lastMessage){
-                    this.lastMessage = __allMessages[__allMessages.length - 1].innerHTML;
-                    console.log("Зафиксировано изменение...", this.lastMessage.split("<")[0]);
+
+                var location = window.location.href; 
+                if((location.split("?")[0] === "https://vk.com/im") && (location.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
                     
-                    //  Здесь следует добавить декодировку найденного нового сообщения.
+                    console.log("На странице с диалогами! Location: ", location);
+                    var __allMessages = document.getElementsByClassName("im-mess--text");   //  Все сообщения.
                     
-                    //_Decrypt.decryptSomeMessage(); 
-                }else{
+                    if(this.messageCounter !== __allMessages.length){   //  Если замечено изменение количество сообщений.
+                        
+                        this.messageCounter = __allMessages.length ;    //  Запоминаем общее количество сообщений.
+
+                        if(__allMessages[this.messageCounter - 1].innerHTML !== this.lastMessage){  //  Если последнее сообщение изменилось.
+                            
+                            this.lastMessage = __allMessages[__allMessages.length - 1].innerHTML;   //  Запоминаем последнее сообщение.
+                            console.log("Зафиксировано изменение...", this.lastMessage.split("<")[0]);
+
+                            _Decrypt.decryptSomeMessage();  //  Декодируем сообщение.
+
+                        }else{
+
+                        }
+                    }else{
+
+                    }
                     
                 }
-                
-                
+
             }, 1000);
             
-            
-            
-
         }
-        
-        
-        
-        
     }
 }
 
@@ -157,16 +169,20 @@ class Decrypt{
     decryptSomeMessage(){
         var context = this;
         setTimeout(function(){
-            console.log("Расшифровываем последнее сообщение...");
             var __allMessages = document.getElementsByClassName("im-mess--text");
             var messagesCount = __allMessages.length;
             console.log("Расшифровать последнее сообщение: ", __allMessages[__allMessages.length - 1].innerHTML);
             var sourceText = __allMessages[__allMessages.length - 1].innerHTML;
             var mediaTag = sourceText.split("<")[1];
             var decodeText = context.decryptAlgorithm(sourceText.split("<")[0]);
-            //console.log(this);
-            __allMessages[__allMessages.length - 1].innerHTML = decodeText + "<" + mediaTag;
-        }, 500);
+            console.log(decodeText);
+            if(decodeText !== false){   //  Если декодирование дало положительный результат.
+                __allMessages[__allMessages.length - 1].innerHTML = decodeText + "<" + mediaTag;
+            }else{
+                
+            }
+            
+        }, 0);
     }
     
     
@@ -289,7 +305,6 @@ window.onload = function(){
     _DOWobjectsActions.parseSendElement();
     _DOWobjectsActions.eventListener();                     //  Обработчик обновления последнего сообщения.
     var sendBtnMemory = _DOWobjectsActions.sendBTN;
-    console.log(sendBtnMemory);
     _DOWobjectsActions.createElement(_Crypt, sendBtnMemory);
     
     
