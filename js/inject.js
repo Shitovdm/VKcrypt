@@ -12,6 +12,7 @@ class DOWobjectsActions{
     parseSendElement(){
         var location = window.location.href; 
         if(location.split("?")[0] === "https://vk.com/im"){ //  Если эта страница с диалогаями.
+            console.log("Удаление кнопки отправки сообщения...");
             this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
             this.sendBTN = this.container.children[6];
             console.log(this.container.children[6]);
@@ -47,12 +48,37 @@ class DOWobjectsActions{
         if(!this.eventListenerFlag){
             this.eventListenerFlag = true;
             var _Decrypt = new Decrypt;
-            setInterval(function(){     //  Событие на обновление последнего сообщения.
+            
+            
+            var createElement = this.createElement.bind(this);
+            
+            
+            
+            window.setInterval(function(){     //  Событие на обновление последнего сообщения.
 
                 var location = window.location.href; 
                 if((location.split("?")[0] === "https://vk.com/im") && (location.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
                     
+                    //  Обработка кнопки шифрования и отправки.
+                    
                     console.log("На странице с диалогами! Location: ", location);
+                    this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
+                    
+                    if(this.container.children[6] !== undefined){
+                        this.sendBTN = this.container.children[6];  //  Запоминаем элемент каоторый позволяет отправлять сообщения.
+                        console.log("Удаление кнопки отправки сообщения...");
+                        this.container.removeChild(this.container.children[6]); //  Удаление кнопки отправки.
+                        
+                        console.log();
+                        //  Создание новой кнопки шифрования.
+                        
+                        var _Crypt = new Crypt();
+                        createElement(_Crypt, this.sendBTN);
+
+                    }
+                    
+                    //  Обработка сообщений.
+                    
                     var __allMessages = document.getElementsByClassName("im-mess--text");   //  Все сообщения.
                     
                     if(this.messageCounter !== __allMessages.length){   //  Если замечено изменение количество сообщений.
@@ -113,16 +139,46 @@ class Crypt{
     encryptAlgorithm(__source){
         
         var _Base64 = new Base64();
-        
-        console.log(__source);
 
-        var _encoded = _Base64.encode64(__source);
-        
-        console.log(_encoded);
-        
-        console.log(_Base64.decode64(_encoded));
-        
-        return _encoded;
+        var Salt = "aEzAkM";
+        var literal = "/0x";
+
+        // Encoding: 
+        var MessLen = __source.length,
+            SaltLen = Salt.length;
+
+        var FirstHalfMess = __source.substring(0, MessLen / 2), // Первая часть сообщения
+            SecondHalfMess = __source.substring(MessLen / 2, MessLen), // Вторая часть сообщения
+
+            _1_3_Salt = Salt.substring(0, SaltLen/3), // 1/3 соли
+            _2_3_Salt = Salt.substring(SaltLen/3, SaltLen); // 2/3 соли
+
+        var EncFirstHalfMess = _Base64.encode64(FirstHalfMess), // Первая кодированная часть сообщения
+            RevEncFirstHalfMess = EncFirstHalfMess.split("").reverse().join(""), // Перевернутая первая часть сообщения
+            RevEncFirstHalfMessLen = "" + RevEncFirstHalfMess.length, // Длина перевернутой кодированной первой части сообщения
+
+            EncSecHalfMess = _Base64.encode64(SecondHalfMess), // Вторая кодированная часть сообщения
+            RevEncSecHalfMess = EncSecHalfMess.split("").reverse().join(""), // Перевернутая вторая часть сообщения
+            RevEncSecHalfMessLen = "" + RevEncSecHalfMess.length, // Длина перевернутой кодированной второй части сообщения
+
+            Enc_1_3_Salt = _Base64.encode64(_1_3_Salt), // Кодированная 1/3 соли 
+            _1_3_EncSaltLen = "" + Enc_1_3_Salt.length, // Длина кодированной 1/3 соли
+
+            Enc_2_3_Salt = _Base64.encode64(_2_3_Salt), // Кодированные 2/3 соли 
+            _2_3_EncSaltLen = "" + Enc_2_3_Salt.length; // Длина кодированной 2/3 соли
+
+        var output = 
+                literal + 
+                Enc_1_3_Salt + 
+                RevEncFirstHalfMess +
+                RevEncSecHalfMess + 
+                Enc_2_3_Salt + literal + 
+                RevEncSecHalfMessLen + literal +
+                RevEncFirstHalfMessLen + literal + 
+                _2_3_EncSaltLen + literal + 
+                _1_3_EncSaltLen + literal;
+
+        return output;
     }
     
     encryptAddSault(__source){
@@ -175,11 +231,11 @@ class Decrypt{
             var sourceText = __allMessages[__allMessages.length - 1].innerHTML;
             var mediaTag = sourceText.split("<")[1];
             var decodeText = context.decryptAlgorithm(sourceText.split("<")[0]);
-            console.log(decodeText);
             if(decodeText !== false){   //  Если декодирование дало положительный результат.
+                console.log("Сообщение успешно раскодировано! Decoder return:", decodeText);
                 __allMessages[__allMessages.length - 1].innerHTML = decodeText + "<" + mediaTag;
             }else{
-                
+                console.log("Сообщение находится в незакодированном виде! Decoder return:", decodeText);
             }
             
         }, 0);
@@ -190,13 +246,40 @@ class Decrypt{
         
         var _Base64 = new Base64();
         
-        var __decode = _Base64.decode64(__source);
+        var receiverSalt = "aEzAkM"; // Соль и литерал - такие же, как и у отправителя
+        var receiverLiteral = "/0x";
         
-        return __decode;
-    }
-    
-    splitTags(){
+        var messageParts = __source.split(receiverLiteral);
+
+        var _1_3_EncSaltLength = messageParts[5];       // Длина кодированной 1/3 соли
+        var _2_3_EncSaltLength = messageParts[4];       // Длина кодированной 2/3 соли
+        var encFirstHalfMessLength = messageParts[3];   // Длина кодированной первой половины сообщения
+        var encSecHalfMessLength =  messageParts[2];    // Длина кодированной второй половины сообщения
+        var message =  messageParts[1];                 // Само сообщение
+
+        // Обрезаем с конца строки кодированные 2/3 соли
+        message = message.substring(0, message.length - _2_3_EncSaltLength);
+        // Обрезаем с начала строки кодированные 1/3 соли
+        message = message.substring(_1_3_EncSaltLength, message.length);
+
+        // Выделяем первую часть сообщения
+        var firstHalf = message.substring(0, encFirstHalfMessLength);
+
+        // Выделяем вторую часть сообщения
+        var secondHalf = message.substring(encFirstHalfMessLength, message.length);
+
+        // Декодим части сообщения
+        firstHalf = firstHalf.split("").reverse().join("");
+        firstHalf = _Base64.decode64(firstHalf);
+
+        secondHalf = secondHalf.split("").reverse().join("");
+        secondHalf = _Base64.decode64(secondHalf);
+
+        // Формируем выход 
+        var receiverOutput = firstHalf + secondHalf;
+        console.log(receiverOutput);
         
+        return receiverOutput;
     }
     
     
