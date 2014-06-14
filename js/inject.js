@@ -1,5 +1,8 @@
 
-
+/**
+ * Класс определяет методы взаимодействий с DOM.
+ * @type type
+ */
 class DOWobjectsActions{
     
     constructor(){
@@ -104,6 +107,12 @@ class DOWobjectsActions{
             }, 1000);
             
         }
+    }
+    
+    simulateClick(obj) {
+        var evt = document.createEvent("MouseEvents");
+        evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        var canceled = !obj.dispatchEvent(evt);
     }
 }
 
@@ -286,6 +295,10 @@ class Decrypt{
 }
 
 
+/**
+ * Класс содержит 2 метода, которые позволяют кодировать и декодировать строки в Base64.
+ * @type type
+ */
 class Base64{
     
     constructor(){
@@ -381,21 +394,173 @@ class Base64{
 
 
 window.onload = function(){
-    var _DOWobjectsActions = new DOWobjectsActions();
-    var _Crypt = new Crypt();
-    var _Decrypt = new Decrypt;
+    //var _DOWobjectsActions = new DOWobjectsActions();
+    //var _Crypt = new Crypt();
+    //var _Decrypt = new Decrypt;
     
-    _DOWobjectsActions.parseSendElement();
-    _DOWobjectsActions.eventListener();                     //  Обработчик обновления последнего сообщения.
-    var sendBtnMemory = _DOWobjectsActions.sendBTN;
-    _DOWobjectsActions.createElement(_Crypt, sendBtnMemory);
+    //_DOWobjectsActions.parseSendElement();
+    //_DOWobjectsActions.eventListener();                     //  Обработчик обновления последнего сообщения.
+    //var sendBtnMemory = _DOWobjectsActions.sendBTN;
+    //_DOWobjectsActions.createElement(_Crypt, sendBtnMemory);
     
     
     //_Decrypt.decryptAllMessage();                           //  Декодирует все сообщенгия из переписки.
+    
+    console.log(window.location.href);
+
+    
+    var __Listeners = new Listeners();
+    __Listeners.daemonListener();
+    
+    
+    
     
 };
 
 
 function onhashchange(){
     console.log("GHBDTN");
+}
+
+
+class Listeners{
+    
+    constructor(){
+        this.updateTime = 1000;
+        this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
+        this.sendBTN = this.container.children[6];  //  Элемент отправки сообщения.
+    }
+    /*
+        <div class="encrypt-checkbox-field" title="Включить/Отключить шифрование">
+            <input class="encrypt-chechbox" id="encrypt-state" type="checkbox">
+            <label class="encrypt-label" for="encrypt-state"></label>
+        </div> 
+    */
+    
+    /*
+     * Метод определяет действия на странице диалогов.
+     * @returns {Generator}
+     */
+    
+    conversationListener(){
+        var location = window.location.href;
+        if((location.split("?")[0] === "https://vk.com/im") && (location.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
+            this.container = document.getElementsByClassName("im-page--title-wrapper")["0"];
+            var stateCheckbox = document.createElement("div");
+            stateCheckbox.setAttribute("class","encrypt-checkbox-field");
+            stateCheckbox.setAttribute("title","Включить/Отключить шифрование");
+            this.container.appendChild(stateCheckbox); 
+            
+            var inputTag = document.createElement("input");
+            inputTag.setAttribute("class","encrypt-chechbox");
+            inputTag.setAttribute("id","encrypt-state");
+            inputTag.setAttribute("type","checkbox");
+            stateCheckbox.appendChild(inputTag);
+            
+            var labelTag = document.createElement("label");
+            labelTag.setAttribute("class","encrypt-label");
+            labelTag.setAttribute("for","encrypt-state");
+            stateCheckbox.appendChild(labelTag);
+            
+            
+            var interlocutorNotify = this.interlocutorNotify.bind(this);    
+            inputTag.onchange = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
+                if(inputTag.checked){
+                    console.log("Включение шифрования.");
+                    interlocutorNotify();
+                    //  Добавление записи о создании шифрованого диалога с конкретным пользователем.
+                    
+                    //  Отправляем оповещение пользователю о начала зашифрованого общения.
+                    
+                    //  Начало обмена секретными ключами с пользователем.
+                }else{
+                    console.log("Отключение шифрования.");
+                }
+            }; 
+        }
+    }
+    
+    
+    localStorageActions(){
+        
+    }
+    
+    /*
+     *  Метод отправляет уведомление собеседнику о начале зашифрованой беседы.
+     */ 
+    interlocutorNotify(){
+        var sender = document.getElementsByClassName("_im_page_peer_name")[0];  //  Имя отправителя.
+        var notification = "Пользователь " + sender.text + " хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.";  //  Текст сообщения.
+        
+        var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
+        
+        var textbox = document.getElementsByClassName("im_editable im-chat-input--text _im_text")[0];    //  Текстовое поле ввода сообщения.
+        _DOWobjectsActions.simulateClick(textbox);  //  Моделируем клик по полю ввода сообщения.
+        textbox.innerHTML = notification;   //  Помещаем текст сообщения в поле ввода.
+        
+        //  Заменяем элемент отправки голосового сообщения элементом отправки текстового сообщения.
+        var sendButton = document.getElementsByClassName("im-chat-input--send")[0];
+        sendButton.className = "im-send-btn im-chat-input--send _im_send im-send-btn_send";
+        sendButton.setAttribute("aria-label", "Send");
+        sendButton.setAttribute("data-tttype", "1");
+        
+        _DOWobjectsActions.simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
+        
+        
+        //  Показываем уведомление отправителю, о том что сообщение отправлено и программа ждет ответа собеседника.
+        //  *Если собеседник ответит данными первичного открытого ключа то начинаем шифрование.
+        
+        /*
+         
+         <div class="im-page--fixer _im_typer_c">
+            <div class="notify-auto-crypt">
+                Собеседнику отправлено уведомление. Зашифрованная передача данных начнется автоматически после включения шифрования собеседником.
+            </div>
+            <div class="hide-auto-crypt-notify">&#10006;</div>
+        </div>
+         
+         */
+        
+        var sendButton = document.getElementsByClassName("im-page--fixer")[0];     //  Элемент .im-page--fixer ._im_typer_c находится всегда внизу страницы.
+        
+        sendButton.classList.add("notify-bg");
+        sendButton.innerHTML = 
+                '<div class="notify-auto-crypt">'
+                    +'Собеседнику отправлено уведомление. Зашифрованная передача данных начнется автоматически после включения шифрования собеседником.'
+                +'</div>'
+                + '<div class="hide-auto-crypt-notify">'
+                    +'&#10006;'
+                +'</div>';
+        var hideNotify = document.getElementsByClassName("hide-auto-crypt-notify")[0];  //  Элемент скрытия уведомления.
+        
+        hideNotify.onclick = function(){    //  Обработчик скрытия окна уведомления.
+            var sendButton = document.getElementsByClassName("im-page--fixer")[0];
+            sendButton.classList.remove("notify-bg");
+            sendButton.innerHTML = "";
+        };
+        
+    }
+    
+    daemonListener(){
+        var conversationListener = this.conversationListener.bind(this);
+            
+            
+        window.setInterval(function(){
+            
+            //  События перезода на страницу с диалогом конкретного польщователя.
+            var stateObject = document.getElementById("encrypt-state");
+            if(stateObject === null){
+                //  Create checkbox element.
+                console.log("Создание чекбокса...");
+                conversationListener();
+                
+                
+                
+            }else{
+                console.log("Checkbox уже был создан.");
+            }
+            
+        }, this.updateTime);
+    }
+    
 }
