@@ -489,8 +489,9 @@ class Listeners{
      *  Метод отправляет уведомление собеседнику о начале зашифрованой беседы.
      */ 
     interlocutorNotify(){
-        var sender = document.getElementsByClassName("_im_page_peer_name")[0];  //  Имя отправителя.
-        var notification = "Пользователь " + sender.text + " хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.";  //  Текст сообщения.
+        var senderInfo = document.getElementsByClassName("top_profile_img")[0];
+        var sender = senderInfo.getAttribute("alt");  //  Имя отправителя.
+        var notification = "Пользователь " + sender + " хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.";  //  Текст сообщения.
         
         var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         
@@ -509,18 +510,7 @@ class Listeners{
         
         //  Показываем уведомление отправителю, о том что сообщение отправлено и программа ждет ответа собеседника.
         //  *Если собеседник ответит данными первичного открытого ключа то начинаем шифрование.
-        
-        /*
-         
-         <div class="im-page--fixer _im_typer_c">
-            <div class="notify-auto-crypt">
-                Собеседнику отправлено уведомление. Зашифрованная передача данных начнется автоматически после включения шифрования собеседником.
-            </div>
-            <div class="hide-auto-crypt-notify">&#10006;</div>
-        </div>
-         
-         */
-        
+
         var sendButton = document.getElementsByClassName("im-page--fixer")[0];     //  Элемент .im-page--fixer ._im_typer_c находится всегда внизу страницы.
         
         sendButton.classList.add("notify-bg");

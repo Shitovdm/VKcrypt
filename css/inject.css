@@ -37,9 +37,9 @@
     height: 18px;
     width: 36px;
     margin: 0 5px 0 0;
-    border: 1px solid #dadada;
+    border: 1px solid #d7dade;
     border-radius: 12px;
-    background: #dddddd;
+    background: #d7dade;
 }
 
 /* Стиль бегунка */
@@ -66,8 +66,8 @@
 
 /*   Состояние   */
 .encrypt-chechbox[type="checkbox"]:checked + .encrypt-label::before {
-    background: #6bbf6e;
-    border-color: #6dd75e;
+    background: #4A76A8;
+    border-color: #4A76A8;
 }
 .encrypt-chechbox[type="checkbox"]:checked + .encrypt-label::after {
     left: 19px;
