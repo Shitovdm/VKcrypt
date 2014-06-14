@@ -1,22 +1,104 @@
-.crypt-btn{
-    width: 52px;
-    height: 55px;
-    border: none;
-    background: none;
-    padding: 31px 28px;
-    cursor: pointer;
-    display: block;
-    opacity: 0.7;
-    background-image: url("../img/crypt.png");
-    background-size: 32px 32px;
-    background-repeat: no-repeat;
-    margin-top: -1px;
-    bottom: -13px;
-    right: -57px;
-    background-position: 12px;
+
+
+
+
+
+
+/*   Чекбокс состояния шифрования беседы.   */
+
+/*   Положение чекбокса на странице   */
+.encrypt-checkbox-field{
     position: absolute;
+    left: 67%;
+    top: 12px;
 }
 
-.crypt-btn:hover{
-    background-image: url("../img/crypt-hover.png");
+.encrypt-chechbox[type="checkbox"] {
+    display: none;
+}
+
+/* Стиль метки */
+.encrypt-chechbox[type="checkbox"] + .encrypt-label {
+    cursor: pointer;
+    padding-left: 50px;
+    position: relative;
+    font-family: tahoma, sans-serif, arial;
+}
+
+/* Стиль поля чекбокса */
+.encrypt-chechbox[type="checkbox"] + .encrypt-label::before {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    vertical-align: middle;
+    padding: 0;
+    height: 18px;
+    width: 36px;
+    margin: 0 5px 0 0;
+    border: 1px solid #dadada;
+    border-radius: 12px;
+    background: #dddddd;
+}
+
+/* Стиль бегунка */
+.encrypt-chechbox[type="checkbox"] + .encrypt-label::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 16px;
+    height: 16px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #dadada;
+    box-shadow: 0 3px 3px rgba(140, 140, 140, .1);
+}
+
+/*   Плавность хода   */
+.encrypt-chechbox[type="checkbox"] + .encrypt-label::before,
+.encrypt-chechbox[type="checkbox"] + .encrypt-label::after {
+    -webkit-transition: all .2s ease-out;
+    transition: all .2s ease-out;
+}
+
+/*   Состояние   */
+.encrypt-chechbox[type="checkbox"]:checked + .encrypt-label::before {
+    background: #6bbf6e;
+    border-color: #6dd75e;
+}
+.encrypt-chechbox[type="checkbox"]:checked + .encrypt-label::after {
+    left: 19px;
+}
+
+
+
+/*   Стили уведомления об начале защищенного соединения.   */
+
+.notify-bg{
+    background-color: #F0F2F5;
+    min-height: 34px!important;
+    width: calc(100% - 2px)!important;
+    border-left: 2px solid #4A76A8;
+}
+.notify-auto-crypt{
+    width: calc(93% - 40px);
+    font-size: 12px;
+    color: #2a5885;
+    padding: 3px 20px;
+    float: left;
+    user-select: none;
+}
+
+.hide-auto-crypt-notify{
+    width: 7%;
+    color: #2a5885;
+    float: left;
+    font-size: 16px;
+    text-align: center;
+    padding-top: 8px;
+    user-select: none;
+    cursor: pointer;
 }
