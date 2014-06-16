@@ -61,6 +61,7 @@ class DOWobjectsActions{
 
                 var location = window.location.href; 
                 if((location.split("?")[0] === "https://vk.com/im") && (location.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
+                
                     
                     //  Обработка кнопки шифрования и отправки.
                     
@@ -404,6 +405,14 @@ window.onload = function(){
     //_DOWobjectsActions.createElement(_Crypt, sendBtnMemory);
     
     
+    chrome.storage.local.get(function(storage){
+        console.log(storage);
+        /*chrome.storage.local.remove(['conversations'], function() {
+            console.log('Object removed!');
+        });*/
+    });
+    
+    
     //_Decrypt.decryptAllMessage();                           //  Декодирует все сообщенгия из переписки.
     
     console.log(window.location.href);
@@ -418,10 +427,6 @@ window.onload = function(){
 };
 
 
-function onhashchange(){
-    console.log("GHBDTN");
-}
-
 
 class Listeners{
     
@@ -430,60 +435,122 @@ class Listeners{
         this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
         this.sendBTN = this.container.children[6];  //  Элемент отправки сообщения.
     }
+    
     /*
-        <div class="encrypt-checkbox-field" title="Включить/Отключить шифрование">
-            <input class="encrypt-chechbox" id="encrypt-state" type="checkbox">
-            <label class="encrypt-label" for="encrypt-state"></label>
-        </div> 
-    */
+     * Метод обрабатывает новые сообщения.
+     * @returns {undefined}
+     */
+    
+    messageListener(){
+        //console.log("Listen new message.");
+        //console.log("Working with local storage.");
+        
+        
+        //var localStorage = new LocalStorageActions;
+        //localStorage.test();
+    }
     
     /*
      * Метод определяет действия на странице диалогов.
+     * Управляет отображением кнопки шифрования и показом и отправков уведомлений.
      * @returns {Generator}
      */
     
     conversationListener(){
-        var location = window.location.href;
-        if((location.split("?")[0] === "https://vk.com/im") && (location.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
-            this.container = document.getElementsByClassName("im-page--title-wrapper")["0"];
-            var stateCheckbox = document.createElement("div");
-            stateCheckbox.setAttribute("class","encrypt-checkbox-field");
-            stateCheckbox.setAttribute("title","Включить/Отключить шифрование");
-            this.container.appendChild(stateCheckbox); 
-            
-            var inputTag = document.createElement("input");
-            inputTag.setAttribute("class","encrypt-chechbox");
-            inputTag.setAttribute("id","encrypt-state");
-            inputTag.setAttribute("type","checkbox");
-            stateCheckbox.appendChild(inputTag);
-            
-            var labelTag = document.createElement("label");
-            labelTag.setAttribute("class","encrypt-label");
-            labelTag.setAttribute("for","encrypt-state");
-            stateCheckbox.appendChild(labelTag);
-            
-            
-            var interlocutorNotify = this.interlocutorNotify.bind(this);    
-            inputTag.onchange = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
-                if(inputTag.checked){
-                    console.log("Включение шифрования.");
-                    interlocutorNotify();
-                    //  Добавление записи о создании шифрованого диалога с конкретным пользователем.
-                    
-                    //  Отправляем оповещение пользователю о начала зашифрованого общения.
-                    
-                    //  Начало обмена секретными ключами с пользователем.
-                }else{
-                    console.log("Отключение шифрования.");
-                }
-            }; 
-        }
-    }
-    
-    
-    localStorageActions(){
+        //  Создание чербокса.
+        this.container = document.getElementsByClassName("im-page--title-wrapper")["0"];
+        var stateCheckbox = document.createElement("div");
+        stateCheckbox.setAttribute("class","encrypt-checkbox-field");
+        stateCheckbox.setAttribute("title","Включить/Отключить шифрование");
+        this.container.appendChild(stateCheckbox); 
+
+        var inputTag = document.createElement("input");
+        inputTag.setAttribute("class","encrypt-chechbox");
+        inputTag.setAttribute("id","encrypt-state");
+        inputTag.setAttribute("type","checkbox");
+        stateCheckbox.appendChild(inputTag);
+
+        var labelTag = document.createElement("label");
+        labelTag.setAttribute("class","encrypt-label");
+        labelTag.setAttribute("for","encrypt-state");
+        stateCheckbox.appendChild(labelTag);
         
-    }
+        //  Определение состояния шифрования и цвета чекбокса шифрования.
+        chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
+            var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+            var conversations = storage['conversations'] || null;
+            if(conversations[userID]){
+                var id = conversations[userID] || null;
+
+                var chechbox = document.getElementsByClassName("encrypt-chechbox")[0].checked = true;;
+                switch (id.cryptState){
+                    case "pending": //  Ожидается подтверждение собеседника.
+                        var label = document.getElementsByClassName("encrypt-label")[0];
+                        label.classList.toggle("crypt-pending");
+                        break;
+
+                    case "established": //  Соединение установлено.
+                        
+                        break;
+
+                    case "error":   //  Соединение разорвано собеседником.
+
+                        break;
+
+                    default :
+                        break;
+                } 
+            }else{
+                console.log("Conversation not found in local storage.");
+            }
+        });
+        
+        //  Обработчик события включения и отключения шифрования.
+        var interlocutorNotify = this.interlocutorNotify.bind(this);    
+        inputTag.onchange = function(){
+            if(inputTag.checked){   //  Если чекбокс включен.
+                console.log("Включение шифрования.");
+                //  Добавление записи в локальное хранилище о создании шифрованого диалога с конкретным пользователем.
+                var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+                var userName = document.getElementsByClassName("_im_page_peer_name")[0].text;
+                //  Формирование объекта.
+                var newUser = {
+                    id: userID,
+                    userName: userName,
+                    cryptState: "pending",
+                    secretSalt: null,
+                    secretKey: null,
+                    p: null,
+                    g: null
+                };
+                //  Добавление объекта в локальное хранилище.
+                var localStorage = new LocalStorageActions; //  Создание экземпляра класса для работы с лдокальным хранилищем.
+                
+                var complement = localStorage.complement.bind(this);    //  Метод добавления объекта.
+                localStorage.get('conversations', function (value) {    //  Читаем значение из локального хранилища.
+                    localStorage.complement(value['conversations'], userID, newUser);    //  Добавляем новый объект.
+                });
+                
+                /*localStorage.this.get('conversations', function (value) {    //  Читаем значение из локального хранилища. 
+                    console.log(value);
+            
+                });*/
+                
+                
+                
+                //  Отправляем оповещение пользователю о начала зашифрованого общения.
+                interlocutorNotify();
+                //  Начало обмена секретными ключами с пользователем.
+
+            }else{  //  Если чекбокс выключен.
+                console.log("Отключение шифрования...");
+                var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+                var LocalStorage = new LocalStorageActions;
+                LocalStorage.removeConversation(userID);    //  Удаляем информацию об этом диалоге в локальном хранилище.
+            }
+        }; 
+   }
+    
     
     /*
      *  Метод отправляет уведомление собеседнику о начале зашифрованой беседы.
@@ -531,26 +598,142 @@ class Listeners{
         
     }
     
+    /**
+     * Общий демон, слушает все события.
+     * @returns {undefined}
+     */
+    
     daemonListener(){
         var conversationListener = this.conversationListener.bind(this);
-            
-            
+        var messageListener = this.messageListener.bind(this);
+        
         window.setInterval(function(){
             
-            //  События перезода на страницу с диалогом конкретного польщователя.
-            var stateObject = document.getElementById("encrypt-state");
-            if(stateObject === null){
-                //  Create checkbox element.
-                console.log("Создание чекбокса...");
-                conversationListener();
+            
+            if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
                 
                 
+                if(document.getElementById("encrypt-state") === null){  //  Если чекбокс еще не был создан.
+                    //  Создание чекбокса шифрования.
+                    conversationListener();  //  Управляет отображением кнопки шифрования и показом и отправков уведомлений.
+                }
                 
-            }else{
-                console.log("Checkbox уже был создан.");
+                messageListener();  //  Проверяем наличие новых сообщений.
             }
+            
+                
+
+            
             
         }, this.updateTime);
     }
     
+}
+
+
+class LocalStorageActions{
+    set(object){
+        chrome.storage.local.set(object, function() {
+            console.log(object + ' Value saved!');
+            
+        });
+    }
+    
+    get(object, callback){
+        chrome.storage.local.get([object], callback);
+        
+    }
+    
+    remove(object){
+        chrome.storage.local.remove([object], function() {
+            console.log('Object removed!');
+        });
+    }
+    
+    
+    /*
+     *  Метод добавляет данные в объект в локальном хранилище.
+     */
+    complement(object, key, data){
+        var newObject = {}; //  Создание нового объекта.
+        for(var currentKey in object){  //  Добавление всех ранее записаных объектов.
+            newObject[currentKey] = object[currentKey];
+        }
+        newObject[key] = data;  //  Добавление нового объекта.
+        
+        this.set({'conversations': newObject});            //  Записываем в локальное хранилище.
+        
+        //return newObject;
+    }
+    
+    /*
+     *  Метод удаляет запись о диалоге из локального хранилища при отключении шифрования.
+     */
+    removeConversation(userID){
+        var set = this.set.bind(this);
+        chrome.storage.local.get(function(storage){
+            var conversations = storage['conversations'] || null;
+            //console.log(conversations);
+            if(conversations[userID]){
+                //console.log(conversations[userID]);
+                var newConversations = {};
+                for(var key in conversations){
+                    if (conversations.hasOwnProperty(key) && key !== userID){
+                        newConversations[key] = conversations[key];
+                    }
+                }
+                set({'conversations': newConversations});
+                console.log("Conversation ", userID, " removed!");
+            }
+        });
+    }
+    
+    test(){
+        var userID = "104679602";
+        var userName = "Alexander Shitov";
+        var cryptState = true;
+        var secretKey = "wcpBjMlc3boBjMlMkMlkGS==gRzUyZul2bnBjMlQXawITJekFrTQ==24/0x24/0x8/0x4/0x";
+        var p = 23;
+        var g = 119;
+        
+        var list = {
+            104679602:{
+                id: userID,
+                userName: userName,
+                cryptState: cryptState,
+                secretKey: secretKey,
+                p: p,
+                g: g
+            }
+        };
+        
+        
+        var newUser = {
+            id: "23421502",
+            userName: "Leonid",
+            cryptState: "111",
+            secretKey: "secretKey",
+            p: 45,
+            g: 555
+        };
+        
+        
+        this.get('conversations', function (value) {    //  Читаем значение из локального хранилища. 
+            console.log(value);
+            
+        });
+        
+        //this.set({'conversations': list});
+        
+        
+
+        
+        
+        
+        //this.remove("conversations");
+        
+
+        //console.log(this.get("foo"));
+        
+    }
 }

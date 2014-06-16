@@ -69,6 +69,14 @@
     background: #4A76A8;
     border-color: #4A76A8;
 }
+
+.encrypt-chechbox[type="checkbox"]:checked + .crypt-pending::before{
+    background: #fff900;
+    border-color: #fff900;
+}
+
+
+
 .encrypt-chechbox[type="checkbox"]:checked + .encrypt-label::after {
     left: 19px;
 }
