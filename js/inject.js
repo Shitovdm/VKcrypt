@@ -434,6 +434,8 @@ class Listeners{
         this.updateTime = 1000;
         this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
         this.sendBTN = this.container.children[6];  //  Элемент отправки сообщения.
+        this.messageCounter = 0;
+        this.lastMessage = "";
     }
     
     /*
@@ -444,10 +446,54 @@ class Listeners{
     messageListener(){
         //console.log("Listen new message.");
         //console.log("Working with local storage.");
+        //  Обработка сообщений.
+                    
+        var __allMessages = document.getElementsByClassName("im-mess--text");   //  Все сообщения.
+
+        if(this.messageCounter !== __allMessages.length){   //  Если замечено изменение количество сообщений.
+
+            this.messageCounter = __allMessages.length ;    //  Запоминаем общее количество сообщений.
+
+            if(__allMessages[this.messageCounter - 1].innerHTML !== this.lastMessage){  //  Если последнее сообщение изменилось.
+                var currentMessage = __allMessages[__allMessages.length - 1].innerHTML;
+                this.lastMessage = currentMessage;   //  Запоминаем последнее сообщение.
+                //console.log("Зафиксировано изменение...", this.lastMessage.split("<")[0]);
+                
+                var userFullName = document.getElementsByClassName("_im_page_peer_name")[0].text;     
+                
+                switch (currentMessage.split("<")[0]){
+                    //  Команда начала создания первичных открытых ключей.
+                    case "Пользователь "+userFullName.split(" ")[0]+" хочет начать с Вами защищенную беседу. ":
+                        console.log("Создание пары первичных ключей и отправка их собеседнику.");
+                        //  Создание пары первичных ключей и отправка их собеседнику.
+                        
+                        break;
+                        
+                    //  Команда приема открытого ключа собеседника.
+                    case "alert)":  
+                        alert("Ты пидр еще раз!!");
+                        break;
+                }
+                //_Decrypt.decryptSomeMessage();  //  Декодируем сообщение.
+
+            }else{
+
+            }
+        }else{
+
+        }
+        
+        //  Определяем принятое сообщения.
+        //  Если сообщение является командой.
+        
+        /*switch (){
+            case "Пользователь Dmitry хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.": 
+                // отхуячить 31 знак.
+        }*/
+        
+        //  Начало алгоритма обмена секретными ключами.
         
         
-        //var localStorage = new LocalStorageActions;
-        //localStorage.test();
     }
     
     /*
@@ -510,6 +556,7 @@ class Listeners{
         inputTag.onchange = function(){
             if(inputTag.checked){   //  Если чекбокс включен.
                 console.log("Включение шифрования.");
+                var label = document.getElementsByClassName("encrypt-label")[0].classList.toggle("crypt-pending");
                 //  Добавление записи в локальное хранилище о создании шифрованого диалога с конкретным пользователем.
                 var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                 var userName = document.getElementsByClassName("_im_page_peer_name")[0].text;
@@ -525,18 +572,10 @@ class Listeners{
                 };
                 //  Добавление объекта в локальное хранилище.
                 var localStorage = new LocalStorageActions; //  Создание экземпляра класса для работы с лдокальным хранилищем.
-                
                 var complement = localStorage.complement.bind(this);    //  Метод добавления объекта.
                 localStorage.get('conversations', function (value) {    //  Читаем значение из локального хранилища.
                     localStorage.complement(value['conversations'], userID, newUser);    //  Добавляем новый объект.
                 });
-                
-                /*localStorage.this.get('conversations', function (value) {    //  Читаем значение из локального хранилища. 
-                    console.log(value);
-            
-                });*/
-                
-                
                 
                 //  Отправляем оповещение пользователю о начала зашифрованого общения.
                 interlocutorNotify();
