@@ -407,9 +407,6 @@ window.onload = function(){
     
     chrome.storage.local.get(function(storage){
         console.log(storage);
-        /*chrome.storage.local.remove(['conversations'], function() {
-            console.log('Object removed!');
-        });*/
     });
     
     
@@ -464,37 +461,46 @@ class Listeners{
                 
                 var keyGeneration = new KeyGeneration;
                 
+                //  Определяем принятое сообщения.
                 switch (currentMessage.split("<")[0]){
                     //  Команда начала создания первичных открытых ключей.
-                    case "[1]: Пользователь "+userFullName.split(" ")[0]+" хочет начать с Вами защищенную беседу. ":
+                    case "[" + userFullName.split(" ")[0] + "]: Предлагаю Вам перейти к защищенной беседе. ":
+                        
+                        
                         console.log("Создание пары первичных ключей и отправка их собеседнику.");
                         //  Создание пары первичных ключей и отправка их собеседнику.
                         var publicKeys = keyGeneration.createFirstPublicKey();
                         var encodePublicKeys = keyGeneration.encodePublicKeys(publicKeys);
                         
                         //  Записать ключи в локальное хранилище.
+                        var LocalStorage = new LocalStorageActions;
                         
+                        LocalStorage.changeProperty("p", encodePublicKeys.p ,userID);
+                        LocalStorage.changeProperty("g", encodePublicKeys.g ,userID);
                         
-                        
+                        console.log("Пара первичных ключей в закодированном виде :  p = ", publicKeys.p , " = " , encodePublicKeys.p, "  g = ", publicKeys.g , " = " , encodePublicKeys.g);
                         //  Передача ключей собеседнику.
-                        //console.log(Math.round(encodeKey**(1/3)));
-                        
-                        
-                        
-                        console.log("Пара первичных ключей создана :  p = ", publicKeys.p, "g = ", publicKeys.g);
-                        console.log("Пара первичных ключей в закодированном виде :  p = ", encodePublicKeys.p, "g = ", encodePublicKeys.g);
+                        var senderName = document.getElementsByClassName("top_profile_img")[0].getAttribute("alt");  //  Имя отправителя.
+                        var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br> " + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
+                        var notificationsAndActions = new NotificationsAndActions;
+                        notificationsAndActions.sendServiceMessage(messageContent);
                         
                         break;
                         
                     //  Команда приема открытого ключа собеседника.
-                    case "test":
-                        var LocalStorage = new LocalStorageActions;
-                        LocalStorage.changeCryptState("keyCreation" ,userID);
+                    case "[" + userFullName.split(" ")[0] + "]: Принимаю Ваше предложение. ":
+                        alert("AHAHAH");
                         
                         break;
                 }
                 //_Decrypt.decryptSomeMessage();  //  Декодируем сообщение.
-
+                
+                setTimeout(function(){
+                    chrome.storage.local.get(function(storage){
+                        console.log(storage);
+                    });
+                },4000);
+                
             }else{
 
             }
@@ -502,13 +508,8 @@ class Listeners{
 
         }
         
-        //  Определяем принятое сообщения.
-        //  Если сообщение является командой.
         
-        /*switch (){
-            case "Пользователь Dmitry хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.": 
-                
-        }*/
+        
         
         //  Начало алгоритма обмена секретными ключами.
         
@@ -548,15 +549,15 @@ class Listeners{
             if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
                 var id = conversations[userID] || null;
 
-                var chechbox = document.getElementsByClassName("encrypt-chechbox")[0].checked = true;;
                 switch (id.cryptState){
                     case "pending": //  Ожидается подтверждение собеседника.
                         var label = document.getElementsByClassName("encrypt-label")[0];
                         label.classList.toggle("crypt-pending");
+                        document.getElementsByClassName("encrypt-chechbox")[0].checked = true;
                         break;
 
                     case "established": //  Соединение установлено.
-                        
+                        document.getElementsByClassName("encrypt-chechbox")[0].checked = true;
                         break;
 
                     case "error":   //  Соединение разорвано собеседником.
@@ -567,7 +568,22 @@ class Listeners{
                         break;
                 } 
             }else{
-                console.log("Conversation not found in local storage.");
+                console.log("Conversation not found in local storage. Create note...");
+                //  Создание записи в локальном хранилище информации о данном диалоге.
+                var userName = document.getElementsByClassName("_im_page_peer_name")[0].text;
+                //  Формирование объекта.
+                var newUser = {
+                    id: userID,
+                    userName: userName,
+                    cryptState: "inactive",
+                    secretSalt: null,
+                    secretKey: null,
+                    p: null,
+                    g: null
+                };
+                //  Помещаем в хранилище.
+                var localStorage = new LocalStorageActions; //  Создание экземпляра класса для работы с лдокальным хранилищем.
+                localStorage.addConversation(newUser);
             }
         });
         
@@ -578,7 +594,7 @@ class Listeners{
                 console.log("Включение шифрования.");
                 var label = document.getElementsByClassName("encrypt-label")[0].classList.toggle("crypt-pending");
                 //  Добавление записи в локальное хранилище о создании шифрованого диалога с конкретным пользователем.
-                var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+                //var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                 var userName = document.getElementsByClassName("_im_page_peer_name")[0].text;
                 //  Формирование объекта.
                 var newUser = {
@@ -592,10 +608,7 @@ class Listeners{
                 };
                 //  Добавление объекта в локальное хранилище.
                 var localStorage = new LocalStorageActions; //  Создание экземпляра класса для работы с лдокальным хранилищем.
-                var complement = localStorage.complement.bind(this);    //  Метод добавления объекта.
-                localStorage.get('conversations', function (value) {    //  Читаем значение из локального хранилища.
-                    localStorage.complement(value['conversations'], userID, newUser);    //  Добавляем новый объект.
-                });
+                localStorage.addConversation(newUser);
                 
                 //  Отправляем оповещение пользователю о начала зашифрованого общения.
                 interlocutorNotify();
@@ -617,7 +630,7 @@ class Listeners{
     interlocutorNotify(){
         var senderInfo = document.getElementsByClassName("top_profile_img")[0];
         var sender = senderInfo.getAttribute("alt");  //  Имя отправителя.
-        var notification = "[1]: Пользователь " + sender + " хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.";  //  Текст сообщения.
+        var notification = "[" + sender + "]: Предлагаю Вам перейти к защищенной беседе. <br> Для начала включите шифрование.";  //  Текст сообщения.
         
         var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         
@@ -690,10 +703,35 @@ class Listeners{
 }
 
 
+class NotificationsAndActions{
+    
+    /**
+     * Метод отправляет служебное сообщение собеседнику.
+     * @returns {undefined}
+     */
+    sendServiceMessage(content){
+        var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
+        
+        var textbox = document.getElementsByClassName("im_editable im-chat-input--text _im_text")[0];    //  Текстовое поле ввода сообщения.
+        _DOWobjectsActions.simulateClick(textbox);  //  Моделируем клик по полю ввода сообщения.
+        textbox.innerHTML = content;   //  Помещаем текст сообщения в поле ввода.
+        
+        //  Заменяем элемент отправки голосового сообщения элементом отправки текстового сообщения.
+        var sendButton = document.getElementsByClassName("im-chat-input--send")[0];
+        sendButton.className = "im-send-btn im-chat-input--send _im_send im-send-btn_send";
+        sendButton.setAttribute("aria-label", "Send");
+        sendButton.setAttribute("data-tttype", "1");
+        
+        _DOWobjectsActions.simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
+    }
+    
+}
+
+
 class LocalStorageActions{
     set(object){
         chrome.storage.local.set(object, function() {
-            console.log(object + ' Value saved!');
+            //console.log(object + ' Value saved!');
             
         });
     }
@@ -705,7 +743,21 @@ class LocalStorageActions{
     
     remove(object){
         chrome.storage.local.remove([object], function() {
-            console.log('Object removed!');
+            //console.log('Object removed!');
+        });
+    }
+    
+    /**
+     * Метод добавляет информацию о новом диалоге в локальное хранилище.
+     * @param {type} newUser
+     * @returns {undefined}
+     */
+    addConversation(newUser){
+        var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+        
+        var complement = this.complement.bind(this);    //  Метод добавления объекта.
+        this.get('conversations', function (value) {    //  Читаем значение из локального хранилища.
+            complement(value['conversations'], userID, newUser);    //  Добавляем новый объект.
         });
     }
     
@@ -721,7 +773,7 @@ class LocalStorageActions{
         newObject[key] = data;  //  Добавление нового объекта.
         
         this.set({'conversations': newObject});            //  Записываем в локальное хранилище.
-        
+        console.log("Был вызван метод добавления нового диалога в локальное хранилище...");
         //return newObject;
     }
     
@@ -755,7 +807,7 @@ class LocalStorageActions{
      * @param {type} userID
      * @returns {undefined}
      */
-    changeCryptState(newState, userID){
+    changeProperty(propName, newState, userID){
         var set = this.set.bind(this);
         chrome.storage.local.get(function(storage){
             var conversations = storage['conversations'] || null;
@@ -768,12 +820,12 @@ class LocalStorageActions{
                             var convProps = conversations[key];
                             for(var prop in convProps){
                                 if(convProps.hasOwnProperty(prop)){
-                                    if(prop === "cryptState"){
+                                    if(prop === propName){    
                                         newUser[prop] = newState;
                                     }else{
                                         newUser[prop] = convProps[prop];
                                     }
-                                }
+                                } 
                             }
                             newConversations[key] = newUser;
                         }else{
@@ -782,12 +834,9 @@ class LocalStorageActions{
                     }
                 }
                 set({'conversations': newConversations});
-                console.log("Conversation ", userID, " state changed on ", newState);
             }
         });
     }
-    
-    
 }
 
 
@@ -819,7 +868,7 @@ class KeyGeneration{
             var randomPrime = this.generateRandomNumber(primesFor_p);
             var randomNumber = this.generateRandomNumber(primesFor_g);
 
-            if( numberOperations.isPrimitiveRoot(randomNumber, randomPrime)) {
+            if( randomNumber !== randomPrime && numberOperations.isPrimitiveRoot(randomNumber, randomPrime)) {
                 complete = true; // Пара (p - g) найдена - завершаем поиск
                 p = randomPrime;
                 g = randomNumber;
