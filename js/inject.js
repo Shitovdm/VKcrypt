@@ -460,18 +460,21 @@ class Listeners{
                 //console.log("Зафиксировано изменение...", this.lastMessage.split("<")[0]);
                 
                 var userFullName = document.getElementsByClassName("_im_page_peer_name")[0].text;     
+                var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                 
                 switch (currentMessage.split("<")[0]){
                     //  Команда начала создания первичных открытых ключей.
-                    case "Пользователь "+userFullName.split(" ")[0]+" хочет начать с Вами защищенную беседу. ":
+                    case "[1]: Пользователь "+userFullName.split(" ")[0]+" хочет начать с Вами защищенную беседу. ":
                         console.log("Создание пары первичных ключей и отправка их собеседнику.");
                         //  Создание пары первичных ключей и отправка их собеседнику.
                         
                         break;
                         
                     //  Команда приема открытого ключа собеседника.
-                    case "alert)":  
-                        alert("Ты пидр еще раз!!");
+                    case "test":
+                        var LocalStorage = new LocalStorageActions;
+                        LocalStorage.changeCryptState("keyCreation" ,userID);
+                        
                         break;
                 }
                 //_Decrypt.decryptSomeMessage();  //  Декодируем сообщение.
@@ -542,7 +545,7 @@ class Listeners{
                     case "error":   //  Соединение разорвано собеседником.
 
                         break;
-
+                    
                     default :
                         break;
                 } 
@@ -705,6 +708,7 @@ class LocalStorageActions{
         //return newObject;
     }
     
+    
     /*
      *  Метод удаляет запись о диалоге из локального хранилища при отключении шифрования.
      */
@@ -727,52 +731,41 @@ class LocalStorageActions{
         });
     }
     
-    test(){
-        var userID = "104679602";
-        var userName = "Alexander Shitov";
-        var cryptState = true;
-        var secretKey = "wcpBjMlc3boBjMlMkMlkGS==gRzUyZul2bnBjMlQXawITJekFrTQ==24/0x24/0x8/0x4/0x";
-        var p = 23;
-        var g = 119;
-        
-        var list = {
-            104679602:{
-                id: userID,
-                userName: userName,
-                cryptState: cryptState,
-                secretKey: secretKey,
-                p: p,
-                g: g
+    
+    /*
+     *  Метод изменяет текущее состояние шифрования и записывает его в локальное хранилище.
+     */
+    changeCryptState(newState, userID){
+        var set = this.set.bind(this);
+        chrome.storage.local.get(function(storage){
+            var conversations = storage['conversations'] || null;
+            if(conversations[userID]){
+                var newConversations = {};
+                for(var key in conversations){
+                    if (conversations.hasOwnProperty(key)){
+                        if(key === userID){
+                            var newUser = {};
+                            var convProps = conversations[key];
+                            for(var prop in convProps){
+                                if(convProps.hasOwnProperty(prop)){
+                                    if(prop === "cryptState"){
+                                        newUser[prop] = newState;
+                                    }else{
+                                        newUser[prop] = convProps[prop];
+                                    }
+                                }
+                            }
+                            newConversations[key] = newUser;
+                        }else{
+                           newConversations[key] = conversations[key]; 
+                        }
+                    }
+                }
+                set({'conversations': newConversations});
+                console.log("Conversation ", userID, " state changed on ", newState);
             }
-        };
-        
-        
-        var newUser = {
-            id: "23421502",
-            userName: "Leonid",
-            cryptState: "111",
-            secretKey: "secretKey",
-            p: 45,
-            g: 555
-        };
-        
-        
-        this.get('conversations', function (value) {    //  Читаем значение из локального хранилища. 
-            console.log(value);
-            
         });
-        
-        //this.set({'conversations': list});
-        
-        
-
-        
-        
-        
-        //this.remove("conversations");
-        
-
-        //console.log(this.get("foo"));
-        
     }
+    
+    
 }
