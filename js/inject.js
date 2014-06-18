@@ -851,3 +851,76 @@ class KeyGeneration{
     }
     
 }
+
+class operationsOnNumbers{
+    
+    /**
+     * Метод нахождения простых чисел до указанного предела.
+     * @param {type} number
+     * @returns {Boolean}
+     */
+    isPrime(number) {
+        for (var i = 2; i < number; i++) {
+            if (number % i === 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Метод нахождения чисел, подходящих под условия Хеллмана для p
+     * @param {type} limit
+     * @returns {Array|operationsOnNumbers.primeNumbersFor_p.primeNumbersFor_p}
+     */
+    primeNumbersFor_p(limit) { 
+        var primeNumbersFor_p = [];
+        for(var i = 15; i < limit; i++) {
+            if(this.isPrime(i) && (this.isPrime((i-1)/2)) ) {
+                primeNumbersFor_p.push(i);
+            }
+        }
+        return primeNumbersFor_p;
+    }
+    
+    /**
+     * Метод нахождения чисел, подходящих под условия Хеллмана для g.
+     * @param {type} limit
+     * @returns {Array|operationsOnNumbers.primeNumbersFor_g.primeNumbersFor_g}
+     */
+    primeNumbersFor_g(limit) { 
+        var primeNumbersFor_g = [];
+        for(var i = 15; i < limit; i++) {
+            if(this.isPrime(i)) {
+                primeNumbersFor_g.push(i);
+            }
+        }
+        return primeNumbersFor_g;
+    }
+    
+    /**
+     * Метод проверки соответствия первообазного корня g числу p.
+     * @param {type} number
+     * @param {type} mod_base
+     * @returns {Boolean}
+     */
+    isPrimitiveRoot(number, mod_base) {
+        var power_limit = 1000;
+        for(var i = 1; i < (mod_base); i++) {
+            for(var j = 0; j < power_limit; j++) {
+                if( ((number**j) % mod_base) === i ) {
+                    if( i === (mod_base - 1) ) {
+                        return true;
+                    }
+                    break;
+                } else {
+                    if( j === power_limit - 1 ) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    
+    
+}
