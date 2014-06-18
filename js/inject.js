@@ -466,30 +466,71 @@ class Listeners{
                     //  Команда начала создания первичных открытых ключей.
                     case "[" + userFullName.split(" ")[0] + "]: Предлагаю Вам перейти к защищенной беседе. ":
                         
-                        
                         console.log("Создание пары первичных ключей и отправка их собеседнику.");
                         //  Создание пары первичных ключей и отправка их собеседнику.
                         var publicKeys = keyGeneration.createFirstPublicKey();
                         var encodePublicKeys = keyGeneration.encodePublicKeys(publicKeys);
                         
+                        console.log("Создана пара первичных ключей :  p = ", publicKeys.p , " = " , encodePublicKeys.p, "  g = ", publicKeys.g , " = " , encodePublicKeys.g);
+                        
                         //  Записать ключи в локальное хранилище.
                         var LocalStorage = new LocalStorageActions;
                         
-                        LocalStorage.changeProperty("p", encodePublicKeys.p ,userID);
-                        LocalStorage.changeProperty("g", encodePublicKeys.g ,userID);
+                        //  Необходимо обеспечить последовательное выполнение записи этих значений через обещания.
+                        let promise = new Promise(function (resolve, reject) {
+                            LocalStorage.changeProperty("cryptState", "pending", userID);
+                            setTimeout(function () {
+                                resolve();
+                            }, 500);
+                        });
                         
-                        console.log("Пара первичных ключей в закодированном виде :  p = ", publicKeys.p , " = " , encodePublicKeys.p, "  g = ", publicKeys.g , " = " , encodePublicKeys.g);
-                        //  Передача ключей собеседнику.
+                        //  Последовательное выполнение изменения значений в локальном хранилище.
+                        promise
+                            .then(
+                                function(){
+                                    LocalStorage.changeProperty("p", encodePublicKeys.p, userID);
+                                    return new Promise(function(resolve, reject){
+                                        setTimeout(function () {
+                                            resolve();
+                                        }, 500);
+                                    });    
+                                })
+                            .then(function(){
+                                    LocalStorage.changeProperty("g", encodePublicKeys.g, userID); 
+                                    return new Promise(function(resolve, reject){
+                                        setTimeout(function () {
+                                            resolve();
+                                        }, 500);
+                                    });   
+                                })
+                            .then(function(){
+                                    console.log("Пара первичных ключей записана в локальное хранилище.");
+                                })
+                            .catch(error => console.error(error));
+                        
+                        
+                        //  Передача ключей собеседнику.(код выполняется перед записью ключей в локальное хранилище.)
                         var senderName = document.getElementsByClassName("top_profile_img")[0].getAttribute("alt");  //  Имя отправителя.
-                        var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br> " + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
+                        var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g + "<br>";
                         var notificationsAndActions = new NotificationsAndActions;
                         notificationsAndActions.sendServiceMessage(messageContent);
-                        
+                        console.log("Собеседнику отправлено уведомление с вложенными ключами.");
                         break;
                         
                     //  Команда приема открытого ключа собеседника.
                     case "[" + userFullName.split(" ")[0] + "]: Принимаю Ваше предложение. ":
-                        alert("AHAHAH");
+                        
+                        var p = currentMessage.split("<br>")[2];
+                        var g = currentMessage.split("<br>")[3];
+                        console.log("Приняты первичные ключи шифрования : p = ", p, " g = ", g);
+                        //  Если ключи еще не записаны в локальном хранилище или они не совпалают с записаными.
+                        
+                        
+                        //  Генерация секретного ключа.
+                        
+                        
+                        
+                        
                         
                         break;
                 }
@@ -837,6 +878,23 @@ class LocalStorageActions{
             }
         });
     }
+    
+    /**
+     * Метод проверяет присутствуют ли ключи в локальном хранилище.
+     * @returns {undefined}
+     */
+    issetSecretKeys(){
+        
+    }
+    
+    /**
+     * Метод проверяет, не совпадают ли принятые ключи с теми, что записаны в локальном хранилище.
+     * @returns {undefined}
+     */
+    coincidenceKeys(){
+        
+    }
+    
 }
 
 
@@ -889,8 +947,8 @@ class KeyGeneration{
     encodePublicKeys(keys){
         var _Base64 = new Base64();
         return {
-            p: _Base64.encode64((keys.p)**3),
-            g: _Base64.encode64((keys.g)**3)
+            p: "nj1RQzoNjM0U7qP" + _Base64.encode64((keys.p)**3),
+            g: "g3FeqVt9NjTTw0Q" + _Base64.encode64((keys.g)**3)
         };
     }
     
