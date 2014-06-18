@@ -462,11 +462,19 @@ class Listeners{
                 var userFullName = document.getElementsByClassName("_im_page_peer_name")[0].text;     
                 var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                 
+                var keyGeneration = new KeyGeneration;
+                
                 switch (currentMessage.split("<")[0]){
                     //  Команда начала создания первичных открытых ключей.
                     case "[1]: Пользователь "+userFullName.split(" ")[0]+" хочет начать с Вами защищенную беседу. ":
                         console.log("Создание пары первичных ключей и отправка их собеседнику.");
                         //  Создание пары первичных ключей и отправка их собеседнику.
+                        var publicKeys = keyGeneration.createFirstPublicKey();
+                        
+                        
+                        
+                        console.log("Пара первичных ключей создана :  p = ", publicKeys.p, "g = ", publicKeys.g);
+                        
                         
                         break;
                         
@@ -491,7 +499,7 @@ class Listeners{
         
         /*switch (){
             case "Пользователь Dmitry хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.": 
-                // отхуячить 31 знак.
+                
         }*/
         
         //  Начало алгоритма обмена секретными ключами.
@@ -528,7 +536,8 @@ class Listeners{
         chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
             var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
             var conversations = storage['conversations'] || null;
-            if(conversations[userID]){
+
+            if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
                 var id = conversations[userID] || null;
 
                 var chechbox = document.getElementsByClassName("encrypt-chechbox")[0].checked = true;;
@@ -600,7 +609,7 @@ class Listeners{
     interlocutorNotify(){
         var senderInfo = document.getElementsByClassName("top_profile_img")[0];
         var sender = senderInfo.getAttribute("alt");  //  Имя отправителя.
-        var notification = "Пользователь " + sender + " хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.";  //  Текст сообщения.
+        var notification = "[1]: Пользователь " + sender + " хочет начать с Вами защищенную беседу. <br> Для начала включите шифрование.";  //  Текст сообщения.
         
         var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         
@@ -733,7 +742,10 @@ class LocalStorageActions{
     
     
     /*
-     *  Метод изменяет текущее состояние шифрования и записывает его в локальное хранилище.
+     * Метод изменяет текущее состояние шифрования и записывает его в локальное хранилище.
+     * @param {type} newState
+     * @param {type} userID
+     * @returns {undefined}
      */
     changeCryptState(newState, userID){
         var set = this.set.bind(this);
@@ -767,5 +779,75 @@ class LocalStorageActions{
         });
     }
     
+    
+}
+
+
+ /*
+ *  Класс отвечает за генерацию и обмен ключами.
+ */
+class KeyGeneration{
+    
+    
+    /**
+     * Метод генерирует пару случайных простых чисел, удовлетворяющих алгоритму Диффи-Хелмана.
+     * @returns {KeyGeneration.createFirstPublicKey.injectAnonym$5}
+     */
+    createFirstPublicKey(){
+        
+        var numberOperations = new operationsOnNumbers;
+        
+        var complete = false,   // Флаг показывает, что найдена подходящая под условия Хеллмана пара (p - g)
+            limit = 1000;       // Предел для простых чисел
+
+        var primesFor_p = numberOperations.primeNumbersFor_p(limit), // Массивы чисел, подходящих под условия Хеллмана, из которых выбираются p и g
+            primesFor_g = numberOperations.primeNumbersFor_g(limit); 
+
+        var p = null, // Сами числа p и g
+            g = null;
+            
+        // Поиск пары (p - g)
+        while( complete === false ) {
+            var randomPrime = this.generateRandomNumber(primesFor_p);
+            var randomNumber = this.generateRandomNumber(primesFor_g);
+
+            if( numberOperations.isPrimitiveRoot(randomNumber, randomPrime)) {
+                complete = true; // Пара (p - g) найдена - завершаем поиск
+                p = randomPrime;
+                g = randomNumber;
+            }
+        }
+
+        return {
+            p: p,
+            g: g
+        };
+    }
+    
+    /*
+     * Метод генерации рандомного числа из primes (для p и g отдельно).
+     * @param {type} primesArray
+     * @returns {unresolved}
+     */
+    generateRandomNumber(primesArray){
+         // Генерация рандомного индекса путем выбора разрядов из float, возвращенного из Math.random().
+        var rand = Math.random();
+        if(`${rand}`.split("")[4] === '0') { 
+            var twoDigitNumber = `${rand}`.split("")[6];
+        } else {
+            var twoDigitNumber = `${rand}`.split("")[4] + `${rand}`.split("")[6];
+        }
+
+        // Сгенерированное число - индекс лежит в пределе [0, 99], а элементов в массивах primesFor_p или primesFor_g может быть меньше.
+        // Поэтому выбор числа по рандомному индексу производится из массива, который в K раз больше primesFor_p или primesFor_g.
+        var K = Math.ceil(100 / (primesArray.length));
+        var tempArray = [];
+        for( var i = 0; i < K; i++) {
+            for( var j = 0; j < primesArray.length; j++ ) {
+                tempArray.push(primesArray[j]);
+            }
+        }
+        return tempArray[twoDigitNumber];
+    }
     
 }
