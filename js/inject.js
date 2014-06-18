@@ -470,11 +470,19 @@ class Listeners{
                         console.log("Создание пары первичных ключей и отправка их собеседнику.");
                         //  Создание пары первичных ключей и отправка их собеседнику.
                         var publicKeys = keyGeneration.createFirstPublicKey();
+                        var encodePublicKeys = keyGeneration.encodePublicKeys(publicKeys);
+                        
+                        //  Записать ключи в локальное хранилище.
+                        
+                        
+                        
+                        //  Передача ключей собеседнику.
+                        //console.log(Math.round(encodeKey**(1/3)));
                         
                         
                         
                         console.log("Пара первичных ключей создана :  p = ", publicKeys.p, "g = ", publicKeys.g);
-                        
+                        console.log("Пара первичных ключей в закодированном виде :  p = ", encodePublicKeys.p, "g = ", encodePublicKeys.g);
                         
                         break;
                         
@@ -823,6 +831,20 @@ class KeyGeneration{
             g: g
         };
     }
+    
+    /**
+     * Метод кодирует пару первичных открытых ключей.
+     * @param {type} keys
+     * @returns {KeyGeneration.encodePublicKeys.injectAnonym$6}
+     */
+    encodePublicKeys(keys){
+        var _Base64 = new Base64();
+        return {
+            p: _Base64.encode64((keys.p)**3),
+            g: _Base64.encode64((keys.g)**3)
+        };
+    }
+    
     
     /*
      * Метод генерации рандомного числа из primes (для p и g отдельно).
