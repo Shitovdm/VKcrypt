@@ -115,6 +115,13 @@ class DOWobjectsActions{
         evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
         var canceled = !obj.dispatchEvent(evt);
     }
+    
+    changeCryptState(state){
+        var label = document.getElementsByClassName("encrypt-label")[0];
+        label.classList.toggle("crypt-" + state);
+        document.getElementsByClassName("encrypt-chechbox")[0].checked = true;
+    }
+    
 }
 
 
@@ -394,6 +401,10 @@ class Base64{
 }
 
 
+
+
+
+
 window.onload = function(){
     //var _DOWobjectsActions = new DOWobjectsActions();
     //var _Crypt = new Crypt();
@@ -460,18 +471,25 @@ class Listeners{
                 var userFullName = document.getElementsByClassName("_im_page_peer_name")[0].text;     
                 var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                 
+                var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
                 var keyGeneration = new KeyGeneration;
                 var LocalStorage = new LocalStorageActions;
+                var clearNotifyField = this.clearNotifyField.bind(this);
                 
                 //  Определяем принятое сообщения.
                 switch (currentMessage.split("<")[0]){
                     //  Команда начала создания первичных открытых ключей.
                     case "[" + userFullName.split(" ")[0] + "]: Предлагаю Вам перейти к защищенной беседе. ":
                         
+                        //  Изменяем состояние чекбокса.
+                        _DOWobjectsActions.changeCryptState("pending");
+                        
                         console.log("Создание пары первичных ключей и отправка их собеседнику.");
                         //  Создание пары первичных ключей и отправка их собеседнику.
                         var publicKeys = keyGeneration.createFirstPublicKey();
                         var encodePublicKeys = keyGeneration.encodePublicKeys(publicKeys);
+                        var a = 0;
+                        var A = 0;
                         
                         console.log("Создана пара первичных ключей :  p = ", publicKeys.p , " = " , encodePublicKeys.p, "  g = ", publicKeys.g , " = " , encodePublicKeys.g);
                         
@@ -487,7 +505,7 @@ class Listeners{
                         //  Последовательное выполнение изменения значений в локальном хранилище.
                         promise
                             .then(
-                                function(){
+                                function(){ //  Запись p в локальное хранилище.
                                     LocalStorage.changeProperty("p", encodePublicKeys.p, userID);
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
@@ -495,7 +513,7 @@ class Listeners{
                                         }, 500);
                                     });    
                                 })
-                            .then(function(){
+                            .then(function(){   //  Запись g в локальное хранилище.
                                     LocalStorage.changeProperty("g", encodePublicKeys.g, userID); 
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
@@ -503,17 +521,46 @@ class Listeners{
                                         }, 500);
                                     });   
                                 })
-                            .then(function(){
+                            .then(function(){   //  Генерация a.
                                     console.log("Пара первичных ключей записана в локальное хранилище.");
+                                    //  Генерация секретного ключа пользователя.
+                                    var keyGeneration = new KeyGeneration;
+                                    a = keyGeneration.generateSecretKey();
+                                    console.log("Создан секретный ключ :", a);
+                                    
+                                    //  Кодирование секретного ключа а.
+                                    
+                                    
+                                    
+                                    //  Запись секретного ключа в локальное хранилище.
+                                    LocalStorage.changeProperty("secretKey", a, userID); 
+                                    console.log("Секретный ключ записан в локальное хранилище.");
+                                    return new Promise(function(resolve, reject){
+                                        setTimeout(function () {
+                                            resolve();
+                                        }, 500);
+                                    }); 
+                                })
+                            .then(function(){   //  Расчет открытого ключа A.
+                                    console.log("Секретный ключ записан в локальное хранилище.");
+                                    //  Декодирование первичных ключей p и g.
+                                    var openedKeys = keyGeneration.decodePublicKeys(encodePublicKeys.p, encodePublicKeys.g);
+                                    //  Расчет открытого ключа B.
+                                    var A = bigInt(openedKeys.g).pow(a).mod(openedKeys.p).toString();
+                                    //  Кодирование открытого клюяа для передачи собеседнику.
+                                    console.log("A = ", A);
+                                    var encodeOpenedKey = keyGeneration.encodeOpenedKey(A);
+                                    console.log("A = ", encodeOpenedKey);
+                                    
+                                    //  Передача ключей собеседнику.(код выполняется перед записью ключей в локальное хранилище.)
+                                    var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
+                                    messageContent += "<br>Открытый ключ шифрования:<br>" + encodeOpenedKey + "<br>Ожидаю открытый ключ собеседника.";
+                                    var notificationsAndActions = new NotificationsAndActions;
+                                    notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
+                                    console.log("Собеседнику отправлено уведомление с вложенными ключами.");
                                 })
                             .catch(error => console.error(error));
-                        
-                        
-                        //  Передача ключей собеседнику.(код выполняется перед записью ключей в локальное хранилище.)
-                        var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
-                        var notificationsAndActions = new NotificationsAndActions;
-                        notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
-                        console.log("Собеседнику отправлено уведомление с вложенными ключами.");
+
                         break;
                         
                     //  Команда приема открытого ключа собеседника.
@@ -522,7 +569,9 @@ class Listeners{
                         var p = currentMessage.split("<br>")[2];
                         var tempg = currentMessage.split("<br>")[3];
                         var g = tempg.split("<")[0];
-                        var B = 0;
+                        var b = 0;
+                        //var A = currentMessage.split("<br>")[5];
+                        
                         console.log("Приняты первичные ключи шифрования : p = ", p, " g = ", g);
                         
                         //  Запись первичных секретных ключей в локальное хранилище.
@@ -535,7 +584,7 @@ class Listeners{
                         
                         //  Последовательное выполнение изменения значений в локальном хранилище.
                         secondPhasePromise
-                            .then(function(){
+                            .then(function(){   //  Записывает g в локальное хранилище.
                                     LocalStorage.changeProperty("g", g, userID); 
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
@@ -543,41 +592,151 @@ class Listeners{
                                         }, 500);
                                     });   
                                 })
-                            .then(function(){
+                            .then(function(){   //  Создание секретного ключа b.
                                     console.log("Пара первичных ключей записана в локальное хранилище.");
-                                    
                                     //  Генерация секретного ключа пользователя.
                                     var keyGeneration = new KeyGeneration;
-                                    B = keyGeneration.generateSecretKey();
-                                    console.log("Создан секретный ключ :", B);
+                                    b = keyGeneration.generateSecretKey();
+                                    console.log("Создан секретный ключ :", b);
                                     //  Запись секретного ключа в локальное хранилище.
-                                    LocalStorage.changeProperty("secretKey", B, userID); 
+                                    LocalStorage.changeProperty("secretKey", b, userID); 
                                     console.log("Секретный ключ записан в локальное хранилище.");
+                                    return new Promise(function(resolve, reject){
+                                        setTimeout(function () {
+                                            resolve();
+                                        }, 500);
+                                    }); 
                                 })
                             .then(function(){
                                     console.log("Пара первичных ключей записана в локальное хранилище.");
                                     
                                     //  Декодирует первичные открытые ключи.
                                     var openedKeys = keyGeneration.decodePublicKeys(p, g);
-                                    //  Расчет открытого ключа.
-
-                                    console.log(openedKeys.g);
-                                    console.log(openedKeys.p);
-
-                                    var openedKey = bigInt(openedKeys.g).pow(B).mod(openedKeys.p).toString();
-
+                                    //  Расчет открытого ключа B.
+                                    var B = bigInt(openedKeys.g).pow(b).mod(openedKeys.p).toString();
+                                    //  Кодирование открытого клюяа для передачи собеседнику.
+                                    var encodeOpenedKey = keyGeneration.encodeOpenedKey(B);
+                                    console.log("Encoded B = ", encodeOpenedKey);
+                                    var decodedOpenedKey = keyGeneration.decodeOpenedKey(encodeOpenedKey);
+                                    console.log("B = ", decodedOpenedKey);
+                                    
                                     //  Передача расчитанного открытого ключа собеседнику.
-                                    var messageContent = "[" + senderName + "]: Открытый ключ шифрования: <br>" + openedKey;
+                                    var messageContent = "[" + senderName + "]: Открытый ключ шифрования: <br>" + encodeOpenedKey;
                                     var notificationsAndActions = new NotificationsAndActions;
                                     notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
                                     console.log("Собеседнику отправлено уведомление с открытым ключем.");   
                                 })
+                            .then(function(){   //  Расчет секретного ключа S2.
+                                    
+                                    var A = currentMessage.split("<br>")[5];
+                                    
+                                    //  Декодирование приняиого открытого ключа A.
+                                    A = keyGeneration.decodeOpenedKey(A);
+                                    console.log("A = ", A);
+                                    
+                                    
+                                    console.log("b = ", b);
+                                    
+                                    //  Декодирование первичных ключей g и p.
+                                    var openedKeys = keyGeneration.decodePublicKeys(p, g);
+                                    console.log("p = ", openedKeys.p);
+                                    
+                                    //  Расчет S2.
+                                    var S2 = bigInt(A).pow(b).mod(openedKeys.p).toString();
+                                    console.log("S2 = ", S2);
+                                    //  Хешируем секретный ключ.
+                                    var secretKey_hash = md5(parseInt(S2) + 120497);
+                                    console.log("S2 hash = ", secretKey_hash);
+                                    
+                                    //  Записываем хеш секретного ключа в локальное хранилище.
+                                    LocalStorage.changeProperty("secretToken", secretKey_hash, userID);
+                                    
+                                    return new Promise(function(resolve, reject){
+                                        setTimeout(function () {
+                                            resolve();
+                                        }, 500);
+                                    }); 
+                                    
+                                })
+                            .then(function(){   //  Расчет секретного ключа S2.
+                                    //  Устанавливаем состояние соединения в established.
+                                    LocalStorage.changeProperty("cryptState", "established", userID);
+                                    //  Изменяем состояние чекбокса.
+                                    _DOWobjectsActions.changeCryptState("established");
+                                    //  Очищаем окно с уведомлением.
+                                    clearNotifyField();
+                                })
                             .catch(error => console.error(error));
                         break;
                         
-                        
                     case "[" + userFullName.split(" ")[0] + "]: Открытый ключ шифрования: ":
                         console.log("Принят открытый ключ собеседника.");
+                        //  Принимает открытый ключ собеседника B.
+                        
+                        
+                        //  Считывание p и a из локального хранилища.
+                        chrome.storage.local.get(function (storage) {
+                            var conversations = storage['conversations'] || null;
+                            if (conversations[userID]) {
+                                for (var key in conversations) {
+                                    if (conversations.hasOwnProperty(key) && key === userID) {
+                                        var convProps = conversations[key];
+                                        
+                                        var B = currentMessage.split("<br>")[1];
+                                        B = B.split("<div")[0];
+                                        
+                                        var p = convProps["p"];
+                                        var g = convProps["g"];
+                                        var a = convProps["secretKey"];
+                                        
+                                        //  Декодирование приняиого открытого ключа B.
+                                        B = keyGeneration.decodeOpenedKey(B);
+                                        console.log("B = ", B);
+                                        
+                                        //  Декодирование a.
+                                        console.log("a = ", a);
+                                        
+                                        //  Декодирование p.
+                                        var openedKeys = keyGeneration.decodePublicKeys(p, g);
+                                        console.log("p = ", openedKeys.p);
+                                        
+                                        //  Расчитывает ключ S.
+                                        var S1 = bigInt(B).pow(a).mod(openedKeys.p).toString();
+                                        //  Записывает S в локальное хранилище.
+                                        console.log("S1 = ", S1);
+                                        //  Хешируем секретный ключ.
+                                        var secretKey_hash = md5(parseInt(S1) + 120497);
+                                        console.log("S1 hash = ", secretKey_hash);
+                                        
+                                        //  Последовательно изменяем значения в локальном хранилище.
+                                        let forthPhasePromise = new Promise(function (resolve, reject) {
+                                            //  Записываем хеш секретного ключа в локальное хранилище.
+                                            LocalStorage.changeProperty("secretToken", secretKey_hash, userID);
+                                            setTimeout(function () {
+                                                resolve();
+                                            }, 500);
+                                        });
+
+                                        //  Последовательное выполнение изменения значений в локальном хранилище.
+                                        forthPhasePromise
+                                            .then(function(){   //  Записывает g в локальное хранилище.
+                                                    //  Устанавливаем состояние соединения в established.
+                                                    LocalStorage.changeProperty("cryptState", "established", userID);
+                                                })
+                                            .then(function(){   //  Создание секретного ключа b.
+                                                    //  Отправляем собеседнику уведомление о том, что шифрование включено.
+                                                    var messageContent = "[" + senderName + "]: Защищённая передача данных установлена!";
+                                                    var notificationsAndActions = new NotificationsAndActions;
+                                                    notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
+                                                    console.log("Собеседнику отправлено уведомление о том, что защищённая передача данных установлена.");
+                                                    //  Изменяем состояние чекбокса.
+                                                    _DOWobjectsActions.changeCryptState("established");
+                                                })
+                                            .catch(error => console.error(error));
+                                    }
+                                }
+                            }
+                        });
                         break;
                 }   
                 
@@ -627,6 +786,7 @@ class Listeners{
         labelTag.setAttribute("for","encrypt-state");
         stateCheckbox.appendChild(labelTag);
         
+        var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         //  Определение состояния шифрования и цвета чекбокса шифрования.
         chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
             var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
@@ -637,20 +797,19 @@ class Listeners{
 
                 switch (id.cryptState){
                     case "pending": //  Ожидается подтверждение собеседника.
-                        var label = document.getElementsByClassName("encrypt-label")[0];
-                        label.classList.toggle("crypt-pending");
-                        document.getElementsByClassName("encrypt-chechbox")[0].checked = true;
+                        _DOWobjectsActions.changeCryptState("pending");
                         break;
-
+                        
                     case "established": //  Соединение установлено.
-                        document.getElementsByClassName("encrypt-chechbox")[0].checked = true;
+                        _DOWobjectsActions.changeCryptState("established");
                         break;
 
                     case "error":   //  Соединение разорвано собеседником.
-
+                        _DOWobjectsActions.changeCryptState("error");
                         break;
                     
                     default :
+                        _DOWobjectsActions.changeCryptState("undefined");
                         break;
                 } 
             }else{
@@ -662,7 +821,7 @@ class Listeners{
                     id: userID,
                     userName: userName,
                     cryptState: "inactive",
-                    secretSalt: null,
+                    secretToken: null,
                     secretKey: null,
                     p: null,
                     g: null
@@ -674,7 +833,8 @@ class Listeners{
         });
         
         //  Обработчик события включения и отключения шифрования.
-        var interlocutorNotify = this.interlocutorNotify.bind(this);    
+        var interlocutorNotify = this.interlocutorNotify.bind(this);   
+
         inputTag.onchange = function(){
             if(inputTag.checked){   //  Если чекбокс включен.
                 console.log("Включение шифрования.");
@@ -687,7 +847,7 @@ class Listeners{
                     id: userID,
                     userName: userName,
                     cryptState: "pending",
-                    secretSalt: null,
+                    secretToken: null,
                     secretKey: null,
                     p: null,
                     g: null
@@ -753,7 +913,16 @@ class Listeners{
             sendButton.classList.remove("notify-bg");
             sendButton.innerHTML = "";
         };
-        
+    }
+    
+    /*
+     * Метод очищает поле с уведомлением.
+     * @returns {undefined}
+     */
+    clearNotifyField(){
+        var sendButton = document.getElementsByClassName("im-page--fixer")[0];     //  Элемент .im-page--fixer ._im_typer_c находится всегда внизу страницы.
+        sendButton.classList.remove("notify-bg");
+        sendButton.innerHTML = "";
     }
     
     /**
@@ -866,6 +1035,7 @@ class LocalStorageActions{
      *  Метод удаляет запись о диалоге из локального хранилища при отключении шифрования.
      */
     removeConversation(userID){
+        console.log("Удаление записи о диалоге из локального хранилища.");
         var set = this.set.bind(this);
         chrome.storage.local.get(function(storage){
             var conversations = storage['conversations'] || null;
@@ -993,6 +1163,31 @@ class KeyGeneration{
             g: Math.pow(_Base64.decode64(g.substr(15, g.length)), 0.25)
         };
     }
+    
+    /*
+     * Метод кодирует открытый ключ для передачи собеседнику.
+     * @param {type} openedKey
+     * @returns {Number}
+     */
+    encodeOpenedKey(openedKey){
+        var _Base64 = new Base64();
+        openedKey = parseInt(openedKey) + 4;
+        return "q63jlFTRnN1KLOXFWDE75RQMO" + _Base64.encode64((openedKey)**5);
+    }
+    
+    /*
+     * Метод декодирует открытый ключ для передачи собеседнику.
+     * @param {type} openedKey
+     * @returns {Number}
+     */
+    decodeOpenedKey(openedKey){
+        var _Base64 = new Base64();
+        var splited = openedKey.substr(25, openedKey.length);
+        var decoded = _Base64.decode64(splited);
+        var power = Math.pow(decoded, 0.20);
+        return (Math.round(power) - 4);
+    }
+    
     
     /*
      * Метод генерации рандомного числа из primes (для p и g отдельно).
