@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name" : "VKcrypt", 
-    "version" : "0.5",
+    "version" : "0.7",
     
     "options_page": "options.html",
     "description" : "Protect yourself!",
@@ -13,6 +13,7 @@
         "html/inject.html",
         "css/inject.css",
         "js/inject.js",
+        "js/external/BigInteger.min.js",
         "img/*"
     ],  
     "browser_action": {
@@ -29,7 +30,7 @@
     "content_scripts": [
     {
       "matches": [ "https://vk.com/*" ],
-      "js": [ "js/jquery.min.js", "background.js", "js/inject.js"],
+      "js": [ "js/jquery.min.js", "background.js", "js/inject.js", "js/external/BigInteger.min.js"],
       "css" : ["css/inject.css"],
       "html" : ["html/inject.html"],
       "run_at": "document_end"
