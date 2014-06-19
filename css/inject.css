@@ -75,6 +75,18 @@
     border-color: #fff900;
 }
 
+.encrypt-chechbox[type="checkbox"]:checked + .crypt-established::before{
+    background: #4A76A8;
+    border-color: #4A76A8;
+}
+
+.encrypt-chechbox[type="checkbox"]:checked + .crypt-error::before{
+    background: #fff;
+    border-color: #fff;
+}
+
+
+
 
 
 .encrypt-chechbox[type="checkbox"]:checked + .encrypt-label::after {
