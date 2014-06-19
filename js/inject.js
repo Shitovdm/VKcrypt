@@ -456,10 +456,12 @@ class Listeners{
                 this.lastMessage = currentMessage;   //  Запоминаем последнее сообщение.
                 //console.log("Зафиксировано изменение...", this.lastMessage.split("<")[0]);
                 
+                var senderName = document.getElementsByClassName("top_profile_img")[0].getAttribute("alt");  //  Имя отправителя.
                 var userFullName = document.getElementsByClassName("_im_page_peer_name")[0].text;     
                 var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                 
                 var keyGeneration = new KeyGeneration;
+                var LocalStorage = new LocalStorageActions;
                 
                 //  Определяем принятое сообщения.
                 switch (currentMessage.split("<")[0]){
@@ -474,8 +476,6 @@ class Listeners{
                         console.log("Создана пара первичных ключей :  p = ", publicKeys.p , " = " , encodePublicKeys.p, "  g = ", publicKeys.g , " = " , encodePublicKeys.g);
                         
                         //  Записать ключи в локальное хранилище.
-                        var LocalStorage = new LocalStorageActions;
-                        
                         //  Необходимо обеспечить последовательное выполнение записи этих значений через обещания.
                         let promise = new Promise(function (resolve, reject) {
                             LocalStorage.changeProperty("cryptState", "pending", userID);
@@ -510,10 +510,9 @@ class Listeners{
                         
                         
                         //  Передача ключей собеседнику.(код выполняется перед записью ключей в локальное хранилище.)
-                        var senderName = document.getElementsByClassName("top_profile_img")[0].getAttribute("alt");  //  Имя отправителя.
-                        var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g + "<br>";
+                        var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
                         var notificationsAndActions = new NotificationsAndActions;
-                        notificationsAndActions.sendServiceMessage(messageContent);
+                        notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
                         console.log("Собеседнику отправлено уведомление с вложенными ключами.");
                         break;
                         
@@ -521,26 +520,75 @@ class Listeners{
                     case "[" + userFullName.split(" ")[0] + "]: Принимаю Ваше предложение. ":
                         
                         var p = currentMessage.split("<br>")[2];
-                        var g = currentMessage.split("<br>")[3];
+                        var tempg = currentMessage.split("<br>")[3];
+                        var g = tempg.split("<")[0];
+                        var B = 0;
                         console.log("Приняты первичные ключи шифрования : p = ", p, " g = ", g);
-                        //  Если ключи еще не записаны в локальном хранилище или они не совпалают с записаными.
                         
+                        //  Запись первичных секретных ключей в локальное хранилище.
+                        let secondPhasePromise = new Promise(function (resolve, reject) {
+                            LocalStorage.changeProperty("p", p, userID);
+                            setTimeout(function () {
+                                resolve();
+                            }, 500);
+                        });
                         
-                        //  Генерация секретного ключа.
-                        
-                        
-                        
-                        
-                        
+                        //  Последовательное выполнение изменения значений в локальном хранилище.
+                        secondPhasePromise
+                            .then(function(){
+                                    LocalStorage.changeProperty("g", g, userID); 
+                                    return new Promise(function(resolve, reject){
+                                        setTimeout(function () {
+                                            resolve();
+                                        }, 500);
+                                    });   
+                                })
+                            .then(function(){
+                                    console.log("Пара первичных ключей записана в локальное хранилище.");
+                                    
+                                    //  Генерация секретного ключа пользователя.
+                                    var keyGeneration = new KeyGeneration;
+                                    B = keyGeneration.generateSecretKey();
+                                    console.log("Создан секретный ключ :", B);
+                                    //  Запись секретного ключа в локальное хранилище.
+                                    LocalStorage.changeProperty("secretKey", B, userID); 
+                                    console.log("Секретный ключ записан в локальное хранилище.");
+                                })
+                            .then(function(){
+                                    console.log("Пара первичных ключей записана в локальное хранилище.");
+                                    
+                                    //  Декодирует первичные открытые ключи.
+                                    var openedKeys = keyGeneration.decodePublicKeys(p, g);
+                                    //  Расчет открытого ключа.
+
+                                    console.log(openedKeys.g);
+                                    console.log(openedKeys.p);
+
+                                    var openedKey = bigInt(openedKeys.g).pow(B).mod(openedKeys.p).toString();
+
+                                    //  Передача расчитанного открытого ключа собеседнику.
+                                    var messageContent = "[" + senderName + "]: Открытый ключ шифрования: <br>" + openedKey;
+                                    var notificationsAndActions = new NotificationsAndActions;
+                                    notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
+                                    console.log("Собеседнику отправлено уведомление с открытым ключем.");   
+                                })
+                            .catch(error => console.error(error));
                         break;
-                }
-                //_Decrypt.decryptSomeMessage();  //  Декодируем сообщение.
+                        
+                        
+                    case "[" + userFullName.split(" ")[0] + "]: Открытый ключ шифрования: ":
+                        console.log("Принят открытый ключ собеседника.");
+                        break;
+                }   
                 
+                //  Удалить этот участок.
                 setTimeout(function(){
                     chrome.storage.local.get(function(storage){
                         console.log(storage);
                     });
                 },4000);
+                //
+                
                 
             }else{
 
@@ -548,10 +596,7 @@ class Listeners{
         }else{
 
         }
-        
-        
-        
-        
+
         //  Начало алгоритма обмена секретными ключами.
         
         
@@ -609,7 +654,7 @@ class Listeners{
                         break;
                 } 
             }else{
-                console.log("Conversation not found in local storage. Create note...");
+                console.log("Диалог не найден в локальном хранилище! Создание записи с информацией о диалоге...");
                 //  Создание записи в локальном хранилище информации о данном диалоге.
                 var userName = document.getElementsByClassName("_im_page_peer_name")[0].text;
                 //  Формирование объекта.
@@ -814,8 +859,6 @@ class LocalStorageActions{
         newObject[key] = data;  //  Добавление нового объекта.
         
         this.set({'conversations': newObject});            //  Записываем в локальное хранилище.
-        console.log("Был вызван метод добавления нового диалога в локальное хранилище...");
-        //return newObject;
     }
     
     
@@ -878,22 +921,7 @@ class LocalStorageActions{
             }
         });
     }
-    
-    /**
-     * Метод проверяет присутствуют ли ключи в локальном хранилище.
-     * @returns {undefined}
-     */
-    issetSecretKeys(){
-        
-    }
-    
-    /**
-     * Метод проверяет, не совпадают ли принятые ключи с теми, что записаны в локальном хранилище.
-     * @returns {undefined}
-     */
-    coincidenceKeys(){
-        
-    }
+
     
 }
 
@@ -947,11 +975,24 @@ class KeyGeneration{
     encodePublicKeys(keys){
         var _Base64 = new Base64();
         return {
-            p: "nj1RQzoNjM0U7qP" + _Base64.encode64((keys.p)**3),
-            g: "g3FeqVt9NjTTw0Q" + _Base64.encode64((keys.g)**3)
+            p: "nj1RQzoNjM0U7qP" + _Base64.encode64((keys.p)**4),
+            g: "g3FeqVt9NjTTw0Q" + _Base64.encode64((keys.g)**4)
         };
     }
     
+    /*
+     * Метод декодирует пару первичных открытых ключей.
+     * @param {type} p
+     * @param {type} g
+     * @returns {KeyGeneration.decodePublicKeys.injectAnonym$7}
+     */
+    decodePublicKeys(p, g){
+        var _Base64 = new Base64();
+        return {
+            p: Math.pow(_Base64.decode64(p.substr(15, p.length)), 0.25),
+            g: Math.pow(_Base64.decode64(g.substr(15, g.length)), 0.25)
+        };
+    }
     
     /*
      * Метод генерации рандомного числа из primes (для p и g отдельно).
@@ -977,6 +1018,24 @@ class KeyGeneration{
             }
         }
         return tempArray[twoDigitNumber];
+    }
+    
+    
+    
+    generateSecretKey() {
+        var rand = Math.random();
+        var variable = null;
+
+        if (`${rand}`.split("")[2] === '0') {
+            if (`${rand}`.split("")[6] === '0') {
+                variable = `${rand}`.split("")[3];
+            } else {
+                variable = `${rand}`.split("")[6] + `${rand}`.split("")[3];
+            }
+        } else {
+            variable = `${rand}`.split("")[2] + `${rand}`.split("")[6] + `${rand}`.split("")[3];
+        }
+        return variable;
     }
     
 }
