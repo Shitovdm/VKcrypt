@@ -14,6 +14,7 @@
         "css/inject.css",
         "js/inject.js",
         "js/external/BigInteger.min.js",
+        "js/external/md5.min.js",
         "img/*"
     ],  
     "browser_action": {
@@ -30,7 +31,7 @@
     "content_scripts": [
     {
       "matches": [ "https://vk.com/*" ],
-      "js": [ "js/jquery.min.js", "background.js", "js/inject.js", "js/external/BigInteger.min.js"],
+      "js": [ "js/jquery.min.js", "background.js", "js/inject.js", "js/external/BigInteger.min.js", "js/external/md5.min.js"],
       "css" : ["css/inject.css"],
       "html" : ["html/inject.html"],
       "run_at": "document_end"
