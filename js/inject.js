@@ -3,7 +3,7 @@
  * Класс определяет методы взаимодействий с DOM.
  * @type type
  */
-class DOWobjectsActions{
+class DOMobjectsActions{
     constructor(){
         this.sendBTN = null;
         this.eventListenerFlag = false;
@@ -133,7 +133,7 @@ class Parse{
 }
 
 
-class Crypt{
+class CryptingMessages{
     
     encryptMessage(sendBTN){
         
@@ -203,16 +203,10 @@ class Crypt{
     }
     
     
-    simulateClick(obj) {
-        var evt = document.createEvent("MouseEvents");
-        evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-        var canceled = !obj.dispatchEvent(evt);
-    }
-    
 }
 
 
-class Decrypt{
+class DecryptingMessages{
     
     constructor(){
         
@@ -301,117 +295,17 @@ class Decrypt{
 }
 
 
-/**
- * Класс содержит 2 метода, которые позволяют кодировать и декодировать строки в Base64.
- * @type type
- */
-class Base64{
-    
-    constructor(){
-        
-        this.keyStr = "ABCDEFGHIJKLMNOP" +
-                      "QRSTUVWXYZabcdef" +
-                      "ghijklmnopqrstuv" +
-                      "wxyz0123456789+/" +
-                      "=";
-    }
-    
-    encode64(input) {
-        input = escape(input);
-        var output = "";
-        var chr1, chr2, chr3 = "";
-        var enc1, enc2, enc3, enc4 = "";
-        var i = 0;
-
-        do {
-            chr1 = input.charCodeAt(i++);
-            chr2 = input.charCodeAt(i++);
-            chr3 = input.charCodeAt(i++);
-
-            enc1 = chr1 >> 2;
-            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-            enc4 = chr3 & 63;
-
-            if (isNaN(chr2)) {
-                enc3 = enc4 = 64;
-            } else if (isNaN(chr3)) {
-                enc4 = 64;
-            }
-
-            output = output +
-                    this.keyStr.charAt(enc1) +
-                    this.keyStr.charAt(enc2) +
-                    this.keyStr.charAt(enc3) +
-                    this.keyStr.charAt(enc4);
-            chr1 = chr2 = chr3 = "";
-            enc1 = enc2 = enc3 = enc4 = "";
-        } while (i < input.length);
-
-        return output;
-    }
-    
-    decode64(input) {
-        var output = "";
-        var chr1, chr2, chr3 = "";
-        var enc1, enc2, enc3, enc4 = "";
-        var i = 0;
-
-        // remove all characters that are not A-Z, a-z, 0-9, +, /, or =
-        var base64test = /[^A-Za-z0-9\+\/\=]/g;
-        if (base64test.exec(input)) {
-            /*
-            console.log("There were invalid base64 characters in the input text.\n" +
-                        "Valid base64 characters are A-Z, a-z, 0-9, '+', '/',and '='\n" +
-                        "Expect errors in decoding.");
-            */
-            return false;
-        }
-        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-
-        do {
-            enc1 = this.keyStr.indexOf(input.charAt(i++));
-            enc2 = this.keyStr.indexOf(input.charAt(i++));
-            enc3 = this.keyStr.indexOf(input.charAt(i++));
-            enc4 = this.keyStr.indexOf(input.charAt(i++));
-
-            chr1 = (enc1 << 2) | (enc2 >> 4);
-            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-            chr3 = ((enc3 & 3) << 6) | enc4;
-
-            output = output + String.fromCharCode(chr1);
-
-            if (enc3 !== 64) {
-                output = output + String.fromCharCode(chr2);
-            }
-            if (enc4 !== 64) {
-                output = output + String.fromCharCode(chr3);
-            }
-
-            chr1 = chr2 = chr3 = "";
-            enc1 = enc2 = enc3 = enc4 = "";
-
-        } while (i < input.length);
-
-        return unescape(output);
-    }
-    
-}
-
-
-
-
 
 
 window.onload = function(){
-    //var _DOWobjectsActions = new DOWobjectsActions();
+    //var _DOMobjectsActions = new DOMobjectsActions();
     //var _Crypt = new Crypt();
     //var _Decrypt = new Decrypt;
     
-    //_DOWobjectsActions.parseSendElement();
-    //_DOWobjectsActions.eventListener();                     //  Обработчик обновления последнего сообщения.
-    //var sendBtnMemory = _DOWobjectsActions.sendBTN;
-    //_DOWobjectsActions.createElement(_Crypt, sendBtnMemory);
+    //_DOMobjectsActions.parseSendElement();
+    //_DOMobjectsActions.eventListener();                     //  Обработчик обновления последнего сообщения.
+    //var sendBtnMemory = _DOMobjectsActions.sendBTN;
+    //_DOMobjectsActions.createElement(_Crypt, sendBtnMemory);
     
     
     chrome.storage.local.get(function(storage){
@@ -421,7 +315,7 @@ window.onload = function(){
     
     //_Decrypt.decryptAllMessage();                           //  Декодирует все сообщенгия из переписки.
     
-    console.log(window.location.href);
+    //console.log(window.location.href);
 
     
     var __Listeners = new Listeners();
@@ -442,18 +336,15 @@ class Listeners{
         this.sendBTN = this.container.children[6];  //  Элемент отправки сообщения.
         this.messageCounter = 0;
         this.lastMessage = "";
+        
     }
     
     /*
      * Метод обрабатывает новые сообщения.
      * @returns {undefined}
      */
-    
     messageListener(){
-        //console.log("Listen new message.");
-        //console.log("Working with local storage.");
-        //  Обработка сообщений.
-                    
+        //  Обработка сообщений.       
         var __allMessages = document.getElementsByClassName("im-mess--text");   //  Все сообщения.
 
         if(this.messageCounter !== __allMessages.length){   //  Если замечено изменение количество сообщений.
@@ -469,7 +360,7 @@ class Listeners{
                 var userFullName = document.getElementsByClassName("_im_page_peer_name")[0].text;     
                 var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                 
-                var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
+                var _DOMobjectsActions = new DOMobjectsActions(); //  Создаем экземпляр класса работы с DOM.
                 var keyGeneration = new KeyGeneration;
                 var LocalStorage = new LocalStorageActions;
                 var clearNotifyField = this.clearNotifyField.bind(this);
@@ -480,16 +371,16 @@ class Listeners{
                     case "[" + userFullName.split(" ")[0] + "]: Предлагаю Вам перейти к защищенной беседе. ":
                         
                         //  Изменяем состояние чекбокса.
-                        _DOWobjectsActions.changeCryptState("pending");
+                        _DOMobjectsActions.changeCryptState("pending");
                         
-                        console.log("Создание пары первичных ключей и отправка их собеседнику.");
+                        //console.log("Создание пары первичных ключей и отправка их собеседнику.");
                         //  Создание пары первичных ключей и отправка их собеседнику.
                         var publicKeys = keyGeneration.createFirstPublicKey();
                         var encodePublicKeys = keyGeneration.encodePublicKeys(publicKeys);
                         var a = 0;
                         var A = 0;
                         
-                        console.log("Создана пара первичных ключей :  p = ", publicKeys.p , " = " , encodePublicKeys.p, "  g = ", publicKeys.g , " = " , encodePublicKeys.g);
+                        //console.log("Создана пара первичных ключей :  p = ", publicKeys.p , " = " , encodePublicKeys.p, "  g = ", publicKeys.g , " = " , encodePublicKeys.g);
                         
                         //  Записать ключи в локальное хранилище.
                         //  Необходимо обеспечить последовательное выполнение записи этих значений через обещания.
@@ -520,11 +411,11 @@ class Listeners{
                                     });   
                                 })
                             .then(function(){   //  Генерация a.
-                                    console.log("Пара первичных ключей записана в локальное хранилище.");
+                                    //console.log("Пара первичных ключей записана в локальное хранилище.");
                                     //  Генерация секретного ключа пользователя.
                                     var keyGeneration = new KeyGeneration;
                                     a = keyGeneration.generateSecretKey();
-                                    console.log("Создан секретный ключ :", a);
+                                    //console.log("Создан секретный ключ :", a);
                                     
                                     //  Кодирование секретного ключа а.
                                     
@@ -532,7 +423,7 @@ class Listeners{
                                     
                                     //  Запись секретного ключа в локальное хранилище.
                                     LocalStorage.changeProperty("secretKey", a, userID); 
-                                    console.log("Секретный ключ записан в локальное хранилище.");
+                                    //console.log("Секретный ключ записан в локальное хранилище.");
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
                                             resolve();
@@ -540,22 +431,22 @@ class Listeners{
                                     }); 
                                 })
                             .then(function(){   //  Расчет открытого ключа A.
-                                    console.log("Секретный ключ записан в локальное хранилище.");
+                                    //console.log("Секретный ключ записан в локальное хранилище.");
                                     //  Декодирование первичных ключей p и g.
                                     var openedKeys = keyGeneration.decodePublicKeys(encodePublicKeys.p, encodePublicKeys.g);
                                     //  Расчет открытого ключа B.
                                     var A = bigInt(openedKeys.g).pow(a).mod(openedKeys.p).toString();
                                     //  Кодирование открытого клюяа для передачи собеседнику.
-                                    console.log("A = ", A);
+                                    //console.log("A = ", A);
                                     var encodeOpenedKey = keyGeneration.encodeOpenedKey(A);
-                                    console.log("A = ", encodeOpenedKey);
+                                    //console.log("A = ", encodeOpenedKey);
                                     
                                     //  Передача ключей собеседнику.(код выполняется перед записью ключей в локальное хранилище.)
                                     var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
                                     messageContent += "<br>Открытый ключ шифрования:<br>" + encodeOpenedKey + "<br>Ожидаю открытый ключ собеседника.";
                                     var notificationsAndActions = new NotificationsAndActions;
                                     notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
-                                    console.log("Собеседнику отправлено уведомление с вложенными ключами.");
+                                    //console.log("Собеседнику отправлено уведомление с вложенными ключами.");
                                 })
                             .catch(error => console.error(error));
 
@@ -570,7 +461,7 @@ class Listeners{
                         var b = 0;
                         //var A = currentMessage.split("<br>")[5];
                         
-                        console.log("Приняты первичные ключи шифрования : p = ", p, " g = ", g);
+                        //console.log("Приняты первичные ключи шифрования : p = ", p, " g = ", g);
                         
                         //  Запись первичных секретных ключей в локальное хранилище.
                         let secondPhasePromise = new Promise(function (resolve, reject) {
@@ -595,10 +486,10 @@ class Listeners{
                                     //  Генерация секретного ключа пользователя.
                                     var keyGeneration = new KeyGeneration;
                                     b = keyGeneration.generateSecretKey();
-                                    console.log("Создан секретный ключ :", b);
+                                    //console.log("Создан секретный ключ :", b);
                                     //  Запись секретного ключа в локальное хранилище.
                                     LocalStorage.changeProperty("secretKey", b, userID); 
-                                    console.log("Секретный ключ записан в локальное хранилище.");
+                                    //console.log("Секретный ключ записан в локальное хранилище.");
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
                                             resolve();
@@ -606,7 +497,7 @@ class Listeners{
                                     }); 
                                 })
                             .then(function(){
-                                    console.log("Пара первичных ключей записана в локальное хранилище.");
+                                    //console.log("Пара первичных ключей записана в локальное хранилище.");
                                     
                                     //  Декодирует первичные открытые ключи.
                                     var openedKeys = keyGeneration.decodePublicKeys(p, g);
@@ -614,15 +505,15 @@ class Listeners{
                                     var B = bigInt(openedKeys.g).pow(b).mod(openedKeys.p).toString();
                                     //  Кодирование открытого клюяа для передачи собеседнику.
                                     var encodeOpenedKey = keyGeneration.encodeOpenedKey(B);
-                                    console.log("Encoded B = ", encodeOpenedKey);
+                                    //console.log("Encoded B = ", encodeOpenedKey);
                                     var decodedOpenedKey = keyGeneration.decodeOpenedKey(encodeOpenedKey);
-                                    console.log("B = ", decodedOpenedKey);
+                                    //console.log("B = ", decodedOpenedKey);
                                     
                                     //  Передача расчитанного открытого ключа собеседнику.
                                     var messageContent = "[" + senderName + "]: Открытый ключ шифрования: <br>" + encodeOpenedKey;
                                     var notificationsAndActions = new NotificationsAndActions;
                                     notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
-                                    console.log("Собеседнику отправлено уведомление с открытым ключем.");   
+                                    //console.log("Собеседнику отправлено уведомление с открытым ключем.");   
                                 })
                             .then(function(){   //  Расчет секретного ключа S2.
                                     
@@ -630,21 +521,21 @@ class Listeners{
                                     
                                     //  Декодирование приняиого открытого ключа A.
                                     A = keyGeneration.decodeOpenedKey(A);
-                                    console.log("A = ", A);
+                                    //console.log("A = ", A);
                                     
                                     
-                                    console.log("b = ", b);
+                                    //console.log("b = ", b);
                                     
                                     //  Декодирование первичных ключей g и p.
                                     var openedKeys = keyGeneration.decodePublicKeys(p, g);
-                                    console.log("p = ", openedKeys.p);
+                                    //console.log("p = ", openedKeys.p);
                                     
                                     //  Расчет S2.
                                     var S2 = bigInt(A).pow(b).mod(openedKeys.p).toString();
-                                    console.log("S2 = ", S2);
+                                    //console.log("S2 = ", S2);
                                     //  Хешируем секретный ключ.
                                     var secretKey_hash = md5(parseInt(S2) + 120497);
-                                    console.log("S2 hash = ", secretKey_hash);
+                                    //console.log("S2 hash = ", secretKey_hash);
                                     
                                     //  Записываем хеш секретного ключа в локальное хранилище.
                                     LocalStorage.changeProperty("secretToken", secretKey_hash, userID);
@@ -660,7 +551,7 @@ class Listeners{
                                     //  Устанавливаем состояние соединения в established.
                                     LocalStorage.changeProperty("cryptState", "established", userID);
                                     //  Изменяем состояние чекбокса.
-                                    _DOWobjectsActions.changeCryptState("established");
+                                    _DOMobjectsActions.changeCryptState("established");
                                     //  Очищаем окно с уведомлением.
                                     clearNotifyField();
                                 })
@@ -689,22 +580,22 @@ class Listeners{
                                         
                                         //  Декодирование приняиого открытого ключа B.
                                         B = keyGeneration.decodeOpenedKey(B);
-                                        console.log("B = ", B);
+                                        //console.log("B = ", B);
                                         
                                         //  Декодирование a.
-                                        console.log("a = ", a);
+                                        //console.log("a = ", a);
                                         
                                         //  Декодирование p.
                                         var openedKeys = keyGeneration.decodePublicKeys(p, g);
-                                        console.log("p = ", openedKeys.p);
+                                        //console.log("p = ", openedKeys.p);
                                         
                                         //  Расчитывает ключ S.
                                         var S1 = bigInt(B).pow(a).mod(openedKeys.p).toString();
                                         //  Записывает S в локальное хранилище.
-                                        console.log("S1 = ", S1);
+                                        //console.log("S1 = ", S1);
                                         //  Хешируем секретный ключ.
                                         var secretKey_hash = md5(parseInt(S1) + 120497);
-                                        console.log("S1 hash = ", secretKey_hash);
+                                        //console.log("S1 hash = ", secretKey_hash);
                                         
                                         //  Последовательно изменяем значения в локальном хранилище.
                                         let forthPhasePromise = new Promise(function (resolve, reject) {
@@ -723,12 +614,14 @@ class Listeners{
                                                 })
                                             .then(function(){   //  Создание секретного ключа b.
                                                     //  Отправляем собеседнику уведомление о том, что шифрование включено.
-                                                    var messageContent = "[" + senderName + "]: Защищённая передача данных установлена!";
+                                                    var messageContent = "[" + senderName + "]: Защищённая передача данных установлена!<br>";
+                                                    messageContent += "ВНИМАНИЕ!<br>";
+                                                    messageContent += "Отключив шифрование вы навсегда потеряете возможность расшифровать сообщения, отправленные в зашифрованном виде!<br>";
                                                     var notificationsAndActions = new NotificationsAndActions;
                                                     notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
-                                                    console.log("Собеседнику отправлено уведомление о том, что защищённая передача данных установлена.");
+                                                    //console.log("Собеседнику отправлено уведомление о том, что защищённая передача данных установлена.");
                                                     //  Изменяем состояние чекбокса.
-                                                    _DOWobjectsActions.changeCryptState("established");
+                                                    _DOMobjectsActions.changeCryptState("established");
                                                 })
                                             .catch(error => console.error(error));
                                     }
@@ -741,7 +634,7 @@ class Listeners{
                     case "[" + userFullName.split(" ")[0] + "]: Разрываю защищенное соединение!":
                         
                         //  Удаляем диалог из локального хранилища.
-                        console.log("Собеседник завершил зашифрованное соединение. Отключение шифрования...");
+                        //console.log("Собеседник завершил зашифрованное соединение. Отключение шифрования...");
                         var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                         var LocalStorage = new LocalStorageActions;
                         LocalStorage.removeConversation(userID);    //  Удаляем информацию об этом диалоге в локальном хранилище.
@@ -753,15 +646,26 @@ class Listeners{
                         document.getElementsByClassName("encrypt-chechbox")[0].checked = false;
                         
                         break;
+                    
+                    //  Все сообщения.
+                    default:
+                        
+                        var messageContent = currentMessage.split("<")[0];
+                        console.log(messageContent);
+                        //  Если состояние шифрования имеет статус established.
+                        
+                        
+                        
+                        //  
+                        
+                        //  Декодировка сообщения.
+                        
+                        //  Замена декодированным сообщением.
+                        
+                        break;
                         
                 }   
-                /*  Удалить этот участок.
-                setTimeout(function(){
-                    chrome.storage.local.get(function(storage){
-                        console.log(storage);
-                    });
-                },4000);
-                */
+
             }else{
 
             }
@@ -799,7 +703,7 @@ class Listeners{
         labelTag.setAttribute("for","encrypt-state");
         stateCheckbox.appendChild(labelTag);
         
-        var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
+        var _DOMobjectsActions = new DOMobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         //  Определение состояния шифрования и цвета чекбокса шифрования.
         chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
             var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
@@ -810,22 +714,23 @@ class Listeners{
 
                 switch (id.cryptState){
                     case "pending": //  Ожидается подтверждение собеседника.
-                        _DOWobjectsActions.changeCryptState("pending");
+                        _DOMobjectsActions.changeCryptState("pending");
                         break;
                         
                     case "established": //  Соединение установлено.
-                        _DOWobjectsActions.changeCryptState("established");
+                        _DOMobjectsActions.changeCryptState("established");
                         break;
 
                     case "error":   //  Соединение разорвано собеседником.
-                        _DOWobjectsActions.changeCryptState("error");
+                        _DOMobjectsActions.changeCryptState("error");
                         break;
                     
                     default :
                         break;
                 } 
             }else{
-                console.log("Диалог не найден в локальном хранилище! Создание записи с информацией о диалоге...");
+                console.log("Диалог не найден в локальном хранилище!");
+                console.log("Создание записи с информацией о диалоге...");
                 //  Создание записи в локальном хранилище информации о данном диалоге.
                 var userName = document.getElementsByClassName("_im_page_peer_name")[0].text;
                 //  Формирование объекта.
@@ -883,24 +788,24 @@ class Listeners{
                 var messageContent = "[" + senderName + "]: Разрываю защищенное соединение!";
                 var notificationsAndActions = new NotificationsAndActions;
                 notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
-                
             }
         }; 
    }
     
     
     /*
-     *  Метод отправляет уведомление собеседнику о начале зашифрованой беседы.
-     */ 
+     * Метод отправляет уведомление собеседнику о начале зашифрованой беседы.
+     * @returns {undefined}
+     */
     interlocutorNotify(){
         var senderInfo = document.getElementsByClassName("top_profile_img")[0];
         var sender = senderInfo.getAttribute("alt");  //  Имя отправителя.
         var notification = "[" + sender + "]: Предлагаю Вам перейти к защищенной беседе. <br> Для начала включите шифрование.";  //  Текст сообщения.
         
-        var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
+        var _DOMobjectsActions = new DOMobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         
         var textbox = document.getElementsByClassName("im_editable im-chat-input--text _im_text")[0];    //  Текстовое поле ввода сообщения.
-        _DOWobjectsActions.simulateClick(textbox);  //  Моделируем клик по полю ввода сообщения.
+        _DOMobjectsActions.simulateClick(textbox);  //  Моделируем клик по полю ввода сообщения.
         textbox.innerHTML = notification;   //  Помещаем текст сообщения в поле ввода.
         
         //  Заменяем элемент отправки голосового сообщения элементом отправки текстового сообщения.
@@ -909,7 +814,7 @@ class Listeners{
         sendButton.setAttribute("aria-label", "Send");
         sendButton.setAttribute("data-tttype", "1");
         
-        _DOWobjectsActions.simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
+        _DOMobjectsActions.simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
         
         
         //  Показываем уведомление отправителю, о том что сообщение отправлено и программа ждет ответа собеседника.
@@ -934,6 +839,7 @@ class Listeners{
         };
     }
     
+    
     /*
      * Метод очищает поле с уведомлением.
      * @returns {undefined}
@@ -944,11 +850,11 @@ class Listeners{
         sendButton.innerHTML = "";
     }
     
+    
     /**
      * Общий демон, слушает все события.
      * @returns {undefined}
      */
-    
     daemonListener(){
         var conversationListener = this.conversationListener.bind(this);
         var messageListener = this.messageListener.bind(this);
@@ -972,17 +878,22 @@ class Listeners{
 }
 
 
+/*
+ * Класс определяет методы обмена служебными сообщениями.
+ * @type class
+ */
 class NotificationsAndActions{
     
-    /**
+    /*
      * Метод отправляет служебное сообщение собеседнику.
+     * @param {type} content
      * @returns {undefined}
      */
     sendServiceMessage(content){
-        var _DOWobjectsActions = new DOWobjectsActions(); //  Создаем экземпляр класса работы с DOM.
+        var _DOMobjectsActions = new DOMobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         
         var textbox = document.getElementsByClassName("im_editable im-chat-input--text _im_text")[0];    //  Текстовое поле ввода сообщения.
-        _DOWobjectsActions.simulateClick(textbox);  //  Моделируем клик по полю ввода сообщения.
+        _DOMobjectsActions.simulateClick(textbox);  //  Моделируем клик по полю ввода сообщения.
         textbox.innerHTML = content;   //  Помещаем текст сообщения в поле ввода.
         
         //  Заменяем элемент отправки голосового сообщения элементом отправки текстового сообщения.
@@ -991,25 +902,46 @@ class NotificationsAndActions{
         sendButton.setAttribute("aria-label", "Send");
         sendButton.setAttribute("data-tttype", "1");
         
-        _DOWobjectsActions.simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
+        _DOMobjectsActions.simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
     }
     
 }
 
 
+/*
+ * Класс содержит набор методов для работы с локальным хранилищем.
+ * @type class
+ */
 class LocalStorageActions{
+    
+    /*
+     * Метод устанавливает значение в локальном хранилище.
+     * @param {type} object
+     * @returns {undefined}
+     */
     set(object){
         chrome.storage.local.set(object, function() {
-            //console.log(object + ' Value saved!');
-            
+            //console.log(object + ' Value saved!');  
         });
     }
     
+    
+    /*
+     * Метод получает значение из локального хранилища.
+     * @param {type} object
+     * @param {type} callback
+     * @returns {undefined}
+     */
     get(object, callback){
         chrome.storage.local.get([object], callback);
-        
     }
     
+    
+    /*
+     * Метод удаляет объект из локального хранилища.
+     * @param {type} object
+     * @returns {undefined}
+     */
     remove(object){
         chrome.storage.local.remove([object], function() {
             //console.log('Object removed!');
@@ -1049,11 +981,11 @@ class LocalStorageActions{
      *  Метод удаляет запись о диалоге из локального хранилища при отключении шифрования.
      */
     removeConversation(userID){
-        console.log("Удаление записи о диалоге из локального хранилища.");
+        //console.log("Удаление записи о диалоге из локального хранилища.");
         var set = this.set.bind(this);
         chrome.storage.local.get(function(storage){
             var conversations = storage['conversations'] || null;
-            console.log(conversations);
+            //console.log(conversations);
             if(conversations[userID]){
                 //console.log(conversations[userID]);
                 var newConversations = {};
@@ -1108,15 +1040,14 @@ class LocalStorageActions{
         });
     }
 
-    
 }
 
 
- /*
- *  Класс отвечает за генерацию и обмен ключами.
+/*
+ * Класс содержит набор методы для генерации, кодирования и декодирования различных ключей.
+ * @type class
  */
 class KeyGeneration{
-    
     
     /**
      * Метод генерирует пару случайных простых чисел, удовлетворяющих алгоритму Диффи-Хелмана.
@@ -1124,7 +1055,7 @@ class KeyGeneration{
      */
     createFirstPublicKey(){
         
-        var numberOperations = new operationsOnNumbers;
+        var numberOperations = new OperationsOnNumbers;
         
         var complete = false,   // Флаг показывает, что найдена подходящая под условия Хеллмана пара (p - g)
             limit = 1000;       // Предел для простых чисел
@@ -1153,6 +1084,7 @@ class KeyGeneration{
         };
     }
     
+    
     /**
      * Метод кодирует пару первичных открытых ключей.
      * @param {type} keys
@@ -1165,6 +1097,7 @@ class KeyGeneration{
             g: "g3FeqVt9NjTTw0Q" + _Base64.encode64((keys.g)**4)
         };
     }
+    
     
     /*
      * Метод декодирует пару первичных открытых ключей.
@@ -1180,6 +1113,7 @@ class KeyGeneration{
         };
     }
     
+    
     /*
      * Метод кодирует открытый ключ для передачи собеседнику.
      * @param {type} openedKey
@@ -1190,6 +1124,7 @@ class KeyGeneration{
         openedKey = parseInt(openedKey) + 4;
         return "q63jlFTRnN1KLOXFWDE75RQMO" + _Base64.encode64((openedKey)**5);
     }
+    
     
     /*
      * Метод декодирует открытый ключ для передачи собеседнику.
@@ -1232,7 +1167,10 @@ class KeyGeneration{
     }
     
     
-    
+    /*
+     * Метод генерации случайного числа в диапазоне от 0 до 999.
+     * @returns {String}
+     */
     generateSecretKey() {
         var rand = Math.random();
         var variable = null;
@@ -1251,7 +1189,12 @@ class KeyGeneration{
     
 }
 
-class operationsOnNumbers{
+
+/*
+ * Класс определяет набор методов для работы с простыми числами.
+ * @type class
+ */
+class OperationsOnNumbers{
     
     /**
      * Метод нахождения простых чисел до указанного предела.
@@ -1267,10 +1210,11 @@ class operationsOnNumbers{
         return true;
     }
     
+    
     /**
      * Метод нахождения чисел, подходящих под условия Хеллмана для p
      * @param {type} limit
-     * @returns {Array|operationsOnNumbers.primeNumbersFor_p.primeNumbersFor_p}
+     * @returns {Array|OperationsOnNumbers.primeNumbersFor_p.primeNumbersFor_p}
      */
     primeNumbersFor_p(limit) { 
         var primeNumbersFor_p = [];
@@ -1282,10 +1226,11 @@ class operationsOnNumbers{
         return primeNumbersFor_p;
     }
     
+    
     /**
      * Метод нахождения чисел, подходящих под условия Хеллмана для g.
      * @param {type} limit
-     * @returns {Array|operationsOnNumbers.primeNumbersFor_g.primeNumbersFor_g}
+     * @returns {Array|OperationsOnNumbers.primeNumbersFor_g.primeNumbersFor_g}
      */
     primeNumbersFor_g(limit) { 
         var primeNumbersFor_g = [];
@@ -1296,6 +1241,7 @@ class operationsOnNumbers{
         }
         return primeNumbersFor_g;
     }
+    
     
     /**
      * Метод проверки соответствия первообазного корня g числу p.
@@ -1320,6 +1266,115 @@ class operationsOnNumbers{
             }
         }
     }
+
+}
+
+
+/*
+ * Класс содержит 2 метода, которые позволяют кодировать и декодировать строки в Base64.
+ * @type class
+ */
+class Base64{
     
+    constructor(){
+        
+        this.keyStr = "ABCDEFGHIJKLMNOP" +
+                      "QRSTUVWXYZabcdef" +
+                      "ghijklmnopqrstuv" +
+                      "wxyz0123456789+/" +
+                      "=";
+    }
+    
+    
+    /*
+     * Метод кодирование входящей строки в base64.
+     * @param {type} input
+     * @returns {String}
+     */
+    encode64(input) {
+        input = escape(input);
+        var output = "";
+        var chr1, chr2, chr3 = "";
+        var enc1, enc2, enc3, enc4 = "";
+        var i = 0;
+
+        do {
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
+
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
+
+            output = output +
+                    this.keyStr.charAt(enc1) +
+                    this.keyStr.charAt(enc2) +
+                    this.keyStr.charAt(enc3) +
+                    this.keyStr.charAt(enc4);
+            chr1 = chr2 = chr3 = "";
+            enc1 = enc2 = enc3 = enc4 = "";
+        } while (i < input.length);
+
+        return output;
+    }
+    
+    
+    /*
+     * Метод декодирования из base64.
+     * @param {type} input
+     * @returns {Boolean}
+     */
+    decode64(input) {
+        var output = "";
+        var chr1, chr2, chr3 = "";
+        var enc1, enc2, enc3, enc4 = "";
+        var i = 0;
+
+        // remove all characters that are not A-Z, a-z, 0-9, +, /, or =
+        var base64test = /[^A-Za-z0-9\+\/\=]/g;
+        if (base64test.exec(input)) {
+            /*
+            console.log("There were invalid base64 characters in the input text.\n" +
+                        "Valid base64 characters are A-Z, a-z, 0-9, '+', '/',and '='\n" +
+                        "Expect errors in decoding.");
+            */
+            return false;
+        }
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+        do {
+            enc1 = this.keyStr.indexOf(input.charAt(i++));
+            enc2 = this.keyStr.indexOf(input.charAt(i++));
+            enc3 = this.keyStr.indexOf(input.charAt(i++));
+            enc4 = this.keyStr.indexOf(input.charAt(i++));
+
+            chr1 = (enc1 << 2) | (enc2 >> 4);
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            chr3 = ((enc3 & 3) << 6) | enc4;
+
+            output = output + String.fromCharCode(chr1);
+
+            if (enc3 !== 64) {
+                output = output + String.fromCharCode(chr2);
+            }
+            if (enc4 !== 64) {
+                output = output + String.fromCharCode(chr3);
+            }
+
+            chr1 = chr2 = chr3 = "";
+            enc1 = enc2 = enc3 = enc4 = "";
+
+        } while (i < input.length);
+
+        return unescape(output);
+    }
     
 }
