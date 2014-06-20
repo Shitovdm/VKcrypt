@@ -64,10 +64,16 @@
     transition: all .2s ease-out;
 }
 
-/*   Состояние   */
+/*   Состояния   */
+
 .encrypt-chechbox[type="checkbox"]:checked + .encrypt-label::before {
-    background: #4A76A8;
-    border-color: #4A76A8;
+    background: #d7dade;
+    border-color: #d7dade;
+}
+
+.encrypt-chechbox[type="checkbox"]:checked + .crypt-inactive::before{
+    background: #d7dade;
+    border-color: #d7dade;
 }
 
 .encrypt-chechbox[type="checkbox"]:checked + .crypt-pending::before{
