@@ -4,9 +4,7 @@
  * @type type
  */
 class DOWobjectsActions{
-    
     constructor(){
-        console.log("Инициализация расширения...");
         this.sendBTN = null;
         this.eventListenerFlag = false;
         this.messageCounter = 0;
@@ -499,7 +497,7 @@ class Listeners{
                             LocalStorage.changeProperty("cryptState", "pending", userID);
                             setTimeout(function () {
                                 resolve();
-                            }, 500);
+                            }, 100);
                         });
                         
                         //  Последовательное выполнение изменения значений в локальном хранилище.
@@ -510,7 +508,7 @@ class Listeners{
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
                                             resolve();
-                                        }, 500);
+                                        }, 100);
                                     });    
                                 })
                             .then(function(){   //  Запись g в локальное хранилище.
@@ -518,7 +516,7 @@ class Listeners{
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
                                             resolve();
-                                        }, 500);
+                                        }, 100);
                                     });   
                                 })
                             .then(function(){   //  Генерация a.
@@ -538,7 +536,7 @@ class Listeners{
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
                                             resolve();
-                                        }, 500);
+                                        }, 100);
                                     }); 
                                 })
                             .then(function(){   //  Расчет открытого ключа A.
@@ -579,7 +577,7 @@ class Listeners{
                             LocalStorage.changeProperty("p", p, userID);
                             setTimeout(function () {
                                 resolve();
-                            }, 500);
+                            }, 100);
                         });
                         
                         //  Последовательное выполнение изменения значений в локальном хранилище.
@@ -589,7 +587,7 @@ class Listeners{
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
                                             resolve();
-                                        }, 500);
+                                        }, 100);
                                     });   
                                 })
                             .then(function(){   //  Создание секретного ключа b.
@@ -604,7 +602,7 @@ class Listeners{
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
                                             resolve();
-                                        }, 500);
+                                        }, 100);
                                     }); 
                                 })
                             .then(function(){
@@ -654,7 +652,7 @@ class Listeners{
                                     return new Promise(function(resolve, reject){
                                         setTimeout(function () {
                                             resolve();
-                                        }, 500);
+                                        }, 100);
                                     }); 
                                     
                                 })
@@ -714,7 +712,7 @@ class Listeners{
                                             LocalStorage.changeProperty("secretToken", secretKey_hash, userID);
                                             setTimeout(function () {
                                                 resolve();
-                                            }, 500);
+                                            }, 100);
                                         });
 
                                         //  Последовательное выполнение изменения значений в локальном хранилище.
@@ -738,17 +736,32 @@ class Listeners{
                             }
                         });
                         break;
+                    
+                    //  Если собеседник закрыл защищенный канал связи.
+                    case "[" + userFullName.split(" ")[0] + "]: Разрываю защищенное соединение!":
+                        
+                        //  Удаляем диалог из локального хранилища.
+                        console.log("Собеседник завершил зашифрованное соединение. Отключение шифрования...");
+                        var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+                        var LocalStorage = new LocalStorageActions;
+                        LocalStorage.removeConversation(userID);    //  Удаляем информацию об этом диалоге в локальном хранилище.
+                        //  Устанавливаем чекбокс в неактивное положение.
+                        var label = document.getElementsByClassName("encrypt-label")[0];
+                        //label.classList.toggle("crypt-pending");
+                        //label.classList.toggle("crypt-established");
+                        label.classList.toggle("crypt-inactive");
+                        document.getElementsByClassName("encrypt-chechbox")[0].checked = false;
+                        
+                        break;
+                        
                 }   
-                
-                //  Удалить этот участок.
+                /*  Удалить этот участок.
                 setTimeout(function(){
                     chrome.storage.local.get(function(storage){
                         console.log(storage);
                     });
                 },4000);
-                //
-                
-                
+                */
             }else{
 
             }
@@ -809,7 +822,6 @@ class Listeners{
                         break;
                     
                     default :
-                        _DOWobjectsActions.changeCryptState("undefined");
                         break;
                 } 
             }else{
@@ -865,6 +877,13 @@ class Listeners{
                 var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
                 var LocalStorage = new LocalStorageActions;
                 LocalStorage.removeConversation(userID);    //  Удаляем информацию об этом диалоге в локальном хранилище.
+                
+                //  Посылаем уведомление собеседнику о завершении шифрованного соединения.
+                var senderName = document.getElementsByClassName("top_profile_img")[0].getAttribute("alt");  //  Имя отправителя.
+                var messageContent = "[" + senderName + "]: Разрываю защищенное соединение!";
+                var notificationsAndActions = new NotificationsAndActions;
+                notificationsAndActions.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
+                
             }
         }; 
    }
@@ -936,7 +955,6 @@ class Listeners{
         
         window.setInterval(function(){
             
-            
             if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
                 
                 
@@ -947,11 +965,7 @@ class Listeners{
                 
                 messageListener();  //  Проверяем наличие новых сообщений.
             }
-            
-                
 
-            
-            
         }, this.updateTime);
     }
     
@@ -1039,7 +1053,7 @@ class LocalStorageActions{
         var set = this.set.bind(this);
         chrome.storage.local.get(function(storage){
             var conversations = storage['conversations'] || null;
-            //console.log(conversations);
+            console.log(conversations);
             if(conversations[userID]){
                 //console.log(conversations[userID]);
                 var newConversations = {};
@@ -1048,8 +1062,10 @@ class LocalStorageActions{
                         newConversations[key] = conversations[key];
                     }
                 }
-                set({'conversations': newConversations});
-                console.log("Conversation ", userID, " removed!");
+                setTimeout(function(){
+                    set({'conversations': newConversations});
+                    console.log("Conversation ", userID, " removed!");
+                }, 100);
             }
         });
     }
