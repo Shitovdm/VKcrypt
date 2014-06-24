@@ -509,6 +509,7 @@ class Listeners{
                                     _DOMobjectsActions.changeCryptState("established");
                                     //  Очищаем окно с уведомлением.
                                     clearNotifyField();
+                                    console.log("Шифрование успешно включено!");
                                 })
                             .catch(error => console.error(error));
                         break;
@@ -621,7 +622,7 @@ class Listeners{
                                         __allMessages[__allMessages.length - 1].innerHTML = messageContent + " changed__";
 
                                         //  Замена декодированным сообщением.
-
+                                        
 
                                     }
                                 }
