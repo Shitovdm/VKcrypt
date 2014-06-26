@@ -128,3 +128,22 @@
     user-select: none;
     cursor: pointer;
 }
+
+.crypt-btn{
+    margin-top: -1px;
+    bottom: -13px;
+    right: -57px;
+    position: absolute;
+    width: 52px;
+    height: 55px;
+    border: none;
+    padding: 31px 28px;
+    cursor: pointer;
+    display: block;
+    opacity: 0.7;
+    background-color: #FAFBFC;
+    background-image: url(../img/send.svg);
+    background-position: 50%;
+    background-repeat: no-repeat;
+    background-size: 24px 24px;
+}
