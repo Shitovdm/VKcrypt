@@ -8,9 +8,40 @@ window.onload = function(){
         console.log(storage);
     });
     
-   
+    
+    //  Если в текстовом поле уже присутствует текст, сразу показываем кнопку шифрования и отправки.
+    if(document.getElementsByClassName("im-chat-input--text")[0].innerHTML !== ""){
+        console.log("Текстовое поле не пустое!");
+    }else{
+        console.log("Текстовое поле пустое!");
+    }
+    
+    
     var __Listeners = new Listeners();
-    //  Запуск главного демона.
+    var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
+    
+    
+    //  Этот код перенести в демона, так как состояние шифрования и локация может быть изменена без перезагрузки страницы.
+    if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.    
+        chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
+            var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+            var conversations = storage['conversations'] || null;
+
+            if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
+                var id = conversations[userID] || null;
+
+                if(id.cryptState === "established"){
+                     //  Запуск отбработкика отправленных сообщений.
+                     _DOMobjectsActions.textFieltChangeListener();   //  Запускаем обработкик отправки и шифрования написанных сообщений.
+                }
+                
+            }
+        }); 
+    }
+
+   
+    
+    //  Запуск главного демона, обрабатывающего принятые сообщения, отправленные сообщения и .
     __Listeners.daemonListener();
 
 };
@@ -23,8 +54,11 @@ window.onload = function(){
  */
 class DOMobjectsActions{
     constructor(){
+        this.container = null;              //  Родитель элементов отправки сообщений.
+        this.textFieldContent = null;       //  Содержимое текстового поля ввода сообщения.
+        this.defaultSendButton = null;      //  Элемент дефолтной кнопки отправки сообщения.
+        
         this.sendBTN = null;
-        this.eventListenerFlag = false;
         this.messageCounter = 0;
     }
     
@@ -39,92 +73,94 @@ class DOMobjectsActions{
        }     
     }
     
-    createElement(_Crypt, sendBTN){
-        var location = window.location.href; 
-        if(location.split("?")[0] === "https://vk.com/im"){ //  Если эта страница с диалогаями.
-            //  Создаем новый объект, который встанет на место старого.
-            var cryptButton = document.createElement("button");
-            cryptButton.setAttribute("class","crypt-btn");
-            cryptButton.setAttribute("id","encrypt");
-            cryptButton.setAttribute("title","Отправить зашифрованное сообщение");
-            this.container.appendChild(cryptButton); 
-        
-            var encryptBtn = document.getElementById("encrypt");
-            encryptBtn.onclick = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
-                _Crypt.encryptMessage(sendBTN);
-            };   
+    
+    showDefaultButton(){
+        console.log("Поле ввода текста опустошено!");
+        console.log(document.getElementById("encrypt"));
+        //  Показываем кнопку отправки голосового сообщения.
+        document.getElementsByClassName("im-send-btn_send")[0].style.display = "block";  //  Скрываем дефолтную кнопку отправки сообщения.
+        //  Удаляем фейковую кнопку.
+        if(document.getElementById("encrypt") !== null){
+            document.getElementById("encrypt").remove();
         }
+    }
+    
+    
+    hideDefaultSendButton(){
+        if(this.defaultSendButton){ //  Если присутствует дефолтная кнопка отправки сообщения.
+            this.defaultSendButton.style.display = "none";  //  Скрываем дефолтную кнопку отправки сообщения.
+        }
+    }
+    
+    
+    createFakeSendButton(){
+        console.log("Создаем фейковую кнопку.");
+        //  Создаем новую кнопку, которая будет внешне идентична оригиналу, но иметь отличный функционал.
+        var cryptButton = document.createElement("button");
+        cryptButton.setAttribute("class","crypt-btn");
+        cryptButton.setAttribute("id","encrypt");
+        cryptButton.setAttribute("title","Отправить зашифрованное сообщение");
+        this.container.appendChild(cryptButton); 
+
+        var encryptBtn = document.getElementById("encrypt");    //  Элемент кнопки.
+        
+        var simulateClick = this.simulateClick.bind(this);
+        
+        encryptBtn.onclick = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
+            console.log("ENCRYPT!!!");
+            //  Выполняем шифрование сообщения.
+            this.textFieldContent += " _0_0_";
+
+            //  Удаляем фейковую кнопку.
+            document.getElementById("encrypt").remove();
+            //  Отправляем сообщение, эмулируя клик.
+
+            var sendButton = document.getElementsByClassName("im-chat-input--send")[0];
+            simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
+
+
+
+        };
           
     }
     
-    /*
-     * Обрабатывает последнее сообщение.
-     * @returns {undefined}
-     */
-    eventListener(){
-        console.log("Обработка последнего сообщения...");
+    
+    textFieltChangeListener(){
         
-        if(!this.eventListenerFlag){
-            this.eventListenerFlag = true;
-            var _Decrypt = new Decrypt;
-            
-            
-            var createElement = this.createElement.bind(this);
-            
-            
-            
-            window.setInterval(function(){     //  Событие на обновление последнего сообщения.
+        var hideDefaultSendButton = this.hideDefaultSendButton.bind(this);
+        var createFakeSendButton = this.createFakeSendButton.bind(this);
+        var showDefaultButton = this.showDefaultButton.bind(this);
+        var setInnersVars = this.setInnersVars.bind(this);
+        
+        document.getElementsByClassName("im-chat-input--text")[0].addEventListener("DOMSubtreeModified", function() {   //  При изменении содержимого поля ввода текста.
+            //  Устанавливаем значение переменных содержащих элементы DOM.
+            setInnersVars();
 
-                var location = window.location.href; 
-                if((location.split("?")[0] === "https://vk.com/im") && (location.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
-                
-                    
-                    //  Обработка кнопки шифрования и отправки.
-                    
-                    console.log("На странице с диалогами! Location: ", location);
-                    this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
-                    
-                    if(this.container.children[6] !== undefined){
-                        this.sendBTN = this.container.children[6];  //  Запоминаем элемент каоторый позволяет отправлять сообщения.
-                        console.log("Удаление кнопки отправки сообщения...");
-                        this.container.removeChild(this.container.children[6]); //  Удаление кнопки отправки.
-                        
-                        console.log();
-                        //  Создание новой кнопки шифрования.
-                        
-                        var _Crypt = new Crypt();
-                        createElement(_Crypt, this.sendBTN);
+            //  Скрываем дефолтную кнопку отправки текстового сообщения.
+            hideDefaultSendButton();
 
-                    }
-                    
-                    //  Обработка сообщений.
-                    
-                    var __allMessages = document.getElementsByClassName("im-mess--text");   //  Все сообщения.
-                    
-                    if(this.messageCounter !== __allMessages.length){   //  Если замечено изменение количество сообщений.
-                        
-                        this.messageCounter = __allMessages.length ;    //  Запоминаем общее количество сообщений.
-
-                        if(__allMessages[this.messageCounter - 1].innerHTML !== this.lastMessage){  //  Если последнее сообщение изменилось.
-                            
-                            this.lastMessage = __allMessages[__allMessages.length - 1].innerHTML;   //  Запоминаем последнее сообщение.
-                            console.log("Зафиксировано изменение...", this.lastMessage.split("<")[0]);
-
-                            _Decrypt.decryptSomeMessage();  //  Декодируем сообщение.
-
-                        }else{
-
-                        }
-                    }else{
-
-                    }
-                    
+            if(document.getElementsByClassName("im-chat-input--text")[0].innerHTML !== ""){        //  Если содержимое поля ввода не пустое.
+                var cryptBTN = document.getElementsByClassName("crypt-btn")[0];     //  Элемент фейковой кнопки.
+                if(cryptBTN === undefined){     //  Если фейковая кнопка еще не была создана.
+                    createFakeSendButton();     //  Создаем фейковую кнопку.
                 }
+            }else{  //  Если поле ввода текста опустошено. Показываем кнопку отправки голосового сообщения.
+                showDefaultButton();
+            }
 
-            }, 1000);
-            
-        }
+        });
+        
     }
+    
+    
+    setInnersVars(){
+        this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
+        this.textFieldContent = document.getElementsByClassName("im-chat-input--text")[0].innerHTML;
+        this.defaultSendButton = document.getElementsByClassName("im-send-btn_send")[0];
+    }
+    
+    
+    
     
     simulateClick(obj) {
         var evt = document.createEvent("MouseEvents");
@@ -621,7 +657,6 @@ class MainActions{
                         __allMessages[__allMessages.length - 1].innerHTML = messageContent + " changed__";
 
                         //  Замена декодированным сообщением.
-                        
                         
                         
                         
