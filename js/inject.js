@@ -95,7 +95,10 @@ class DOMobjectsActions{
         }
     }
     
-    
+    /**
+     * Метод создает новую кнопку отправки сообщения и вешает на нее обработчик события шифрования и отправки.
+     * @returns {undefined}
+     */
     createFakeSendButton(){
         console.log("Создаем фейковую кнопку.");
         //  Создаем новую кнопку, которая будет внешне идентична оригиналу, но иметь отличный функционал.
@@ -105,57 +108,31 @@ class DOMobjectsActions{
         cryptButton.setAttribute("title","Отправить зашифрованное сообщение");
         this.container.appendChild(cryptButton); 
 
-        var encryptBtn = document.getElementById("encrypt");    //  Элемент кнопки.
+        var encryptBtn = document.getElementById("encrypt");        //  Элемент кнопки.
         
-        var simulateClick = this.simulateClick.bind(this);
-        var textFieldReplacement = this.textFieldReplacement.bind(this);
+        var simulateClick = this.simulateClick.bind(this);          //  Метод эмуляции клика.
         
-        
-        var _CryptingMessages = new CryptingMessages;
-        
-        
+        var _CryptingMessages = new CryptingMessages;               //  Класс шифрования сообщений.
         
         //var cryptingMessages = _CryptingMessages.encryptMessage.bind(this);            //  Метод кодрования исходного сообщения.
         
         encryptBtn.onclick = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
             console.log("Click on fake button...");
             
-            
-            _CryptingMessages.encryptMessage();
-            
-            
             //  Выполняем шифрование сообщения и замену исходного сообщения в поле ввода.
+            _CryptingMessages.encryptMessage();     //  Шифрование сообщения.
+            //  Ожидание необходимо для того, чтобы браузер успел вытащить ключ из локального хранилища.
+            setTimeout(function(){
+                //  Удаляем фейковую кнопку.
+                document.getElementById("encrypt").remove();
+                //  Отправляем сообщение, эмулируя клик.
+
+                var sendButton = document.getElementsByClassName("im-chat-input--send")[0];
+                simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
+            },150);
             
-            
-            //textFieldReplacement();
-            
-            //  Удаляем фейковую кнопку.
-            document.getElementById("encrypt").remove();
-            //  Отправляем сообщение, эмулируя клик.
-
-            var sendButton = document.getElementsByClassName("im-chat-input--send")[0];
-            simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
-
-
-
         };
           
-    }
-    
-    /*
-     * Метод выполняет замену содержимого текстового поля ввода сообщения при отправке сообщения.
-     * Приотправке текстовое поле ввода сообщения должно содержать шифрованное сообщение.
-     * @returns {undefined}
-     */
-    textFieldReplacement(){
-        console.log("Text field content replacement.");
-        this.textFieldContent = document.getElementsByClassName("im-chat-input--text")[0].innerHTML;
-        
-        //  Кодируем сообщение.
-        var encryptContent = "";
-        
-        //  Заменяем содержимое текстового поля.
-        document.getElementsByClassName("im-chat-input--text")[0].innerHTML = encryptContent;
     }
     
     
@@ -195,17 +172,27 @@ class DOMobjectsActions{
     
     
     
-    
+    /**
+     * Метод эмулирует клик по элементу.
+     * @param {type} obj
+     * @returns {undefined}
+     */
     simulateClick(obj) {
         var evt = document.createEvent("MouseEvents");
         evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
         var canceled = !obj.dispatchEvent(evt);
     }
     
+    /**
+     * Метод работае с визуальным переключателем шифрования.
+     * @param {type} state
+     * @returns {undefined}
+     */
     changeCryptState(state){
         var label = document.getElementsByClassName("encrypt-label")[0];
         label.classList.toggle("crypt-" + state);
         document.getElementsByClassName("encrypt-chechbox")[0].checked = true;
+        console.log("Вкл/Выкл шифрования.");
     }
     
 }
@@ -230,31 +217,59 @@ class CryptingMessages{
         var textfield = document.getElementsByClassName("im_editable");
         var sourceText = textfield[0].innerHTML;
         if(sourceText !== ""){
-            var encoded = this.encryptAlgorithm(sourceText);      //  Кодировка сообщения.
-            textfield[0].innerHTML = encoded;                     //  Вставка текста сообщения в текстфилд.
-            //this.simulateClick(sendBTN);                          //  Отправка сообщения.
-            //_Decrypt.decryptSomeMessage();                        //  Расшифруем последнее отправленное сообщение.
+            
+            var SecretKey = "";
+            var encryptAlgorithm = this.encryptAlgorithm; 
+           
+            let promise = new Promise(function (resolve, reject) {
+                //  Достаем из оркального хранилища секретный ключ.
+                chrome.storage.local.get(function(storage){
+                    var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+                    var conversations = storage['conversations'] || null;
+                    if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
+                        var id = conversations[userID] || null;
+                        SecretKey = id.secretToken;
+                        console.log("Секретный ключ получен - ", SecretKey);
+                    }
+                });
+                setTimeout(function () {
+                    resolve();
+                }, 100);
+            });
+
+            promise
+                .then(
+                    function () {
+                        var encoded = encryptAlgorithm(sourceText, SecretKey);      //  Кодировка сообщения.
+                        textfield[0].innerHTML = encoded;                           //  Вставка текста сообщения в текстфилд.
+                        
+                        //this.simulateClick(sendBTN);                              //  Отправка сообщения.
+                        //_Decrypt.decryptLastMessage();                            //  Расшифруем последнее отправленное сообщение.
+                    })
+                .catch(error => console.error(error));
+           
+            
         }else{
             console.log("Поле ввода текста пустое!");
         }
     }
     
-    encryptAlgorithm(__source){
+    encryptAlgorithm(__source, SecretKey){
         
         var _Base64 = new Base64();
 
-        var Salt = "aEzAkM";
-        var literal = "/0x";
+        //var SecretKey = "cecf88db41531add5d0cefaa83fedb38";
+        var literal = "/0xBB/0x3C";
 
         // Encoding: 
         var MessLen = __source.length,
-            SaltLen = Salt.length;
+            SaltLen = SecretKey.length;
 
         var FirstHalfMess = __source.substring(0, MessLen / 2), // Первая часть сообщения
             SecondHalfMess = __source.substring(MessLen / 2, MessLen), // Вторая часть сообщения
 
-            _1_3_Salt = Salt.substring(0, SaltLen/3), // 1/3 соли
-            _2_3_Salt = Salt.substring(SaltLen/3, SaltLen); // 2/3 соли
+            _1_3_Salt = SecretKey.substring(0, SaltLen/3), // 1/3 соли
+            _2_3_Salt = SecretKey.substring(SaltLen/3, SaltLen); // 2/3 соли
 
         var EncFirstHalfMess = _Base64.encode64(FirstHalfMess), // Первая кодированная часть сообщения
             RevEncFirstHalfMess = EncFirstHalfMess.split("").reverse().join(""), // Перевернутая первая часть сообщения
@@ -283,6 +298,11 @@ class CryptingMessages{
 
         return output;
     }
+    
+    
+    
+    
+    
     
     encryptAddSault(__source){
         var _encoded = __source;
@@ -319,7 +339,11 @@ class DecryptingMessages{
         
     }
     
-    decryptSomeMessage(){
+    /**
+     * Метод расшифровывает последнее сообщение.
+     * @returns {undefined}
+     */
+    decryptLastMessage(){
         var context = this;
         setTimeout(function(){
             var __allMessages = document.getElementsByClassName("im-mess--text");
@@ -339,12 +363,22 @@ class DecryptingMessages{
     }
     
     
+    /**
+     * Алгоритм расшифровки сообщения.
+     * @param {type} __source
+     * @returns {DecryptingMessages.decryptAlgorithm.secondHalf|DecryptingMessages.decryptAlgorithm.firstHalf}
+     */
     decryptAlgorithm(__source){
+        
+        //  Для начала получаем общий секретный ключ беседы из локального хранилища.
+        
+        
+        
         
         var _Base64 = new Base64();
         
-        var receiverSalt = "aEzAkM"; // Соль и литерал - такие же, как и у отправителя
-        var receiverLiteral = "/0x";
+        var receiverSalt = "cecf88db41531add5d0cefaa83fedb38"; // Соль и литерал - такие же, как и у отправителя
+        var receiverLiteral = "/0xBB/0x3C";
         
         var messageParts = __source.split(receiverLiteral);
 
@@ -686,9 +720,11 @@ class MainActions{
                 if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
                     var id = conversations[userID] || null;
                     if(id.cryptState === "established"){
-                        console.log("Декодировка сообщения... ", messageContent);
                         //  Декодировка сообщения.
-                        __allMessages[__allMessages.length - 1].innerHTML = messageContent + " encrypted message_";
+                        var _DecryptingMessages = new DecryptingMessages;
+                        _DecryptingMessages.decryptLastMessage();
+                        
+                        //__allMessages[__allMessages.length - 1].innerHTML = messageContent + " encrypted message_";
                         
                         
                         //  Замена декодированным сообщением.
