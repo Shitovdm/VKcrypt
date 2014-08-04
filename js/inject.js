@@ -60,7 +60,10 @@ class DOMobjectsActions{
         
         this.sendBTN = null;
         this.messageCounter = 0;
+        
+        
     }
+    
     
     parseSendElement(){
         var location = window.location.href; 
@@ -105,12 +108,27 @@ class DOMobjectsActions{
         var encryptBtn = document.getElementById("encrypt");    //  Элемент кнопки.
         
         var simulateClick = this.simulateClick.bind(this);
+        var textFieldReplacement = this.textFieldReplacement.bind(this);
+        
+        
+        var _CryptingMessages = new CryptingMessages;
+        
+        
+        
+        //var cryptingMessages = _CryptingMessages.encryptMessage.bind(this);            //  Метод кодрования исходного сообщения.
         
         encryptBtn.onclick = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
-            console.log("ENCRYPT!!!");
-            //  Выполняем шифрование сообщения.
-            this.textFieldContent += " _0_0_";
-
+            console.log("Click on fake button...");
+            
+            
+            _CryptingMessages.encryptMessage();
+            
+            
+            //  Выполняем шифрование сообщения и замену исходного сообщения в поле ввода.
+            
+            
+            //textFieldReplacement();
+            
             //  Удаляем фейковую кнопку.
             document.getElementById("encrypt").remove();
             //  Отправляем сообщение, эмулируя клик.
@@ -122,6 +140,22 @@ class DOMobjectsActions{
 
         };
           
+    }
+    
+    /*
+     * Метод выполняет замену содержимого текстового поля ввода сообщения при отправке сообщения.
+     * Приотправке текстовое поле ввода сообщения должно содержать шифрованное сообщение.
+     * @returns {undefined}
+     */
+    textFieldReplacement(){
+        console.log("Text field content replacement.");
+        this.textFieldContent = document.getElementsByClassName("im-chat-input--text")[0].innerHTML;
+        
+        //  Кодируем сообщение.
+        var encryptContent = "";
+        
+        //  Заменяем содержимое текстового поля.
+        document.getElementsByClassName("im-chat-input--text")[0].innerHTML = encryptContent;
     }
     
     
@@ -189,17 +223,17 @@ class Parse{
 
 class CryptingMessages{
     
-    encryptMessage(sendBTN){
+    encryptMessage(){
         
-        var _Decrypt = new Decrypt;
+        //var _Decrypt = new Decrypt;
         
         var textfield = document.getElementsByClassName("im_editable");
         var sourceText = textfield[0].innerHTML;
         if(sourceText !== ""){
             var encoded = this.encryptAlgorithm(sourceText);      //  Кодировка сообщения.
             textfield[0].innerHTML = encoded;                     //  Вставка текста сообщения в текстфилд.
-            this.simulateClick(sendBTN);                          //  Отправка сообщения.
-            _Decrypt.decryptSomeMessage();                        //  Расшифруем последнее отправленное сообщение.
+            //this.simulateClick(sendBTN);                          //  Отправка сообщения.
+            //_Decrypt.decryptSomeMessage();                        //  Расшифруем последнее отправленное сообщение.
         }else{
             console.log("Поле ввода текста пустое!");
         }
@@ -359,9 +393,9 @@ class MainActions{
         this.userFullName = document.getElementsByClassName("_im_page_peer_name")[0].text;              //  Полное имя собеседника.
         this.userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1]; //  ID пользователя в системе VK.
 
-        this._DOMobjectsActions = new DOMobjectsActions();              //  Класса работы с DOM.
-        this.keyGeneration = new KeyGeneration;                         //  Класс операций с ключами.
-        this.LocalStorage = new LocalStorageActions;                    //  Класс операций с локальным хранилищем.
+        this._DOMobjectsActions = new DOMobjectsActions();                  //  Класса работы с DOM.
+        this.keyGeneration = new KeyGeneration;                             //  Класс операций с ключами.
+        this.LocalStorage = new LocalStorageActions;                        //  Класс операций с локальным хранилищем.
         this.NotificationsAndMessaging = new NotificationsAndMessaging;     //  Класс реализующий функционал отправки сообщений.  
     }
     
@@ -654,8 +688,9 @@ class MainActions{
                     if(id.cryptState === "established"){
                         console.log("Декодировка сообщения... ", messageContent);
                         //  Декодировка сообщения.
-                        __allMessages[__allMessages.length - 1].innerHTML = messageContent + " changed__";
-
+                        __allMessages[__allMessages.length - 1].innerHTML = messageContent + " encrypted message_";
+                        
+                        
                         //  Замена декодированным сообщением.
                         
                         
