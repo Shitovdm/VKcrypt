@@ -349,14 +349,19 @@ class DecryptingMessages{
             var __allMessages = document.getElementsByClassName("im-mess--text");
             var messagesCount = __allMessages.length;
             console.log("Расшифровать последнее сообщение: ", __allMessages[__allMessages.length - 1].innerHTML);
+            
+            
+            
+            
+            
             var sourceText = __allMessages[__allMessages.length - 1].innerHTML;
             var mediaTag = sourceText.split("<")[1];
             var decodeText = context.decryptAlgorithm(sourceText.split("<")[0]);
             if(decodeText !== false){   //  Если декодирование дало положительный результат.
-                console.log("Сообщение успешно раскодировано! Decoder return:", decodeText);
+                console.log("Сообщение успешно раскодировано! Результат:", decodeText);
                 __allMessages[__allMessages.length - 1].innerHTML = decodeText + "<" + mediaTag;
             }else{
-                console.log("Сообщение находится в незакодированном виде! Decoder return:", decodeText);
+                console.log("Сообщение находится в незакодированном виде! Результат:", sourceText);
             }
             
         }, 0);
@@ -380,37 +385,45 @@ class DecryptingMessages{
         var receiverSalt = "cecf88db41531add5d0cefaa83fedb38"; // Соль и литерал - такие же, как и у отправителя
         var receiverLiteral = "/0xBB/0x3C";
         
-        var messageParts = __source.split(receiverLiteral);
+        var errorCheck = __source.split(receiverLiteral) || null;
+        if(errorCheck.length !== 1){
+            var messageParts = __source.split(receiverLiteral);
+            
+            var _1_3_EncSaltLength = messageParts[5];       // Длина кодированной 1/3 соли
+            var _2_3_EncSaltLength = messageParts[4];       // Длина кодированной 2/3 соли
+            var encFirstHalfMessLength = messageParts[3];   // Длина кодированной первой половины сообщения
+            var encSecHalfMessLength =  messageParts[2];    // Длина кодированной второй половины сообщения
+            var message =  messageParts[1];                 // Само сообщение
 
-        var _1_3_EncSaltLength = messageParts[5];       // Длина кодированной 1/3 соли
-        var _2_3_EncSaltLength = messageParts[4];       // Длина кодированной 2/3 соли
-        var encFirstHalfMessLength = messageParts[3];   // Длина кодированной первой половины сообщения
-        var encSecHalfMessLength =  messageParts[2];    // Длина кодированной второй половины сообщения
-        var message =  messageParts[1];                 // Само сообщение
+            // Обрезаем с конца строки кодированные 2/3 соли
+            message = message.substring(0, message.length - _2_3_EncSaltLength);
+            // Обрезаем с начала строки кодированные 1/3 соли
+            message = message.substring(_1_3_EncSaltLength, message.length);
 
-        // Обрезаем с конца строки кодированные 2/3 соли
-        message = message.substring(0, message.length - _2_3_EncSaltLength);
-        // Обрезаем с начала строки кодированные 1/3 соли
-        message = message.substring(_1_3_EncSaltLength, message.length);
+            // Выделяем первую часть сообщения
+            var firstHalf = message.substring(0, encFirstHalfMessLength);
 
-        // Выделяем первую часть сообщения
-        var firstHalf = message.substring(0, encFirstHalfMessLength);
+            // Выделяем вторую часть сообщения
+            var secondHalf = message.substring(encFirstHalfMessLength, message.length);
 
-        // Выделяем вторую часть сообщения
-        var secondHalf = message.substring(encFirstHalfMessLength, message.length);
+            // Декодим части сообщения
+            firstHalf = firstHalf.split("").reverse().join("");
+            firstHalf = _Base64.decode64(firstHalf);
 
-        // Декодим части сообщения
-        firstHalf = firstHalf.split("").reverse().join("");
-        firstHalf = _Base64.decode64(firstHalf);
+            secondHalf = secondHalf.split("").reverse().join("");
+            secondHalf = _Base64.decode64(secondHalf);
 
-        secondHalf = secondHalf.split("").reverse().join("");
-        secondHalf = _Base64.decode64(secondHalf);
+            // Формируем выход 
+            var receiverOutput = firstHalf + secondHalf;
+            console.log(receiverOutput);
 
-        // Формируем выход 
-        var receiverOutput = firstHalf + secondHalf;
-        console.log(receiverOutput);
+            return receiverOutput;
+        }else{
+            //  Сообщение находится в незакодированном виде!
+            return false;
+        }
+
         
-        return receiverOutput;
     }
      
 }
