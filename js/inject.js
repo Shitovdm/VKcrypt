@@ -1,6 +1,5 @@
 
 
-
 window.onload = function(){
     
     //  Вывод содержимого локального хранилища.
@@ -444,6 +443,7 @@ class MainActions{
         var userID = this.userID;
         
         //  Изменяем состояние чекбокса.
+        console.log("Поиск бага...Метка 1");
         this._DOMobjectsActions.changeCryptState("pending");
         //  Создание пары первичных ключей и отправка их собеседнику.
         var publicKeys = this.keyGeneration.createFirstPublicKey();
@@ -586,6 +586,7 @@ class MainActions{
                     //  Устанавливаем состояние соединения в established.
                     LocalStorage.changeProperty("cryptState", "established", userID);
                     //  Изменяем состояние чекбокса.
+                    console.log("Поиск бага...Метка 2");
                     _DOMobjectsActions.changeCryptState("established");
                     //  Очищаем окно с уведомлением.
                     NotificationsAndMessaging.clearNotifyField();
@@ -652,6 +653,7 @@ class MainActions{
                                     NotificationsAndMessaging.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
                                     //console.log("Собеседнику отправлено уведомление о том, что защищённая передача данных установлена.");
                                     //  Изменяем состояние чекбокса.
+                                    console.log("Поиск бага...Метка 3");
                                     _DOMobjectsActions.changeCryptState("established");
                                     console.log("Шифрование успешно включено!");
                                 })
@@ -835,6 +837,7 @@ class Listeners{
         stateCheckbox.appendChild(labelTag);
         
         var _DOMobjectsActions = new DOMobjectsActions(); //  Создаем экземпляр класса работы с DOM.
+        console.log("Определение состояния шифрования");
         //  Определение состояния шифрования и цвета чекбокса шифрования.
         chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
             var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
@@ -845,14 +848,17 @@ class Listeners{
 
                 switch (id.cryptState){
                     case "pending": //  Ожидается подтверждение собеседника.
+                        console.log("Поиск бага...Метка 4");
                         _DOMobjectsActions.changeCryptState("pending");
                         break;
                         
                     case "established": //  Соединение установлено.
+                        console.log("Поиск бага...Метка 5");
                         _DOMobjectsActions.changeCryptState("established");
                         break;
 
                     case "error":   //  Соединение разорвано собеседником.
+                        console.log("Поиск бага...Метка 6");
                         _DOMobjectsActions.changeCryptState("error");
                         break;
                     
