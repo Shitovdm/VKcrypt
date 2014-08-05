@@ -333,10 +333,7 @@ class DecryptingMessages{
             }else{  //  Сообщение не является закодированым.
                 //console.log("Сообщение '" , __allMessages[i].innerHTML , "' не является закодированым!");
             }
-            
         }
-        
-        
     }
     
     /**
@@ -349,13 +346,10 @@ class DecryptingMessages{
             var __allMessages = document.getElementsByClassName("im-mess--text");
             var messagesCount = __allMessages.length;
             console.log("Расшифровать последнее сообщение: ", __allMessages[__allMessages.length - 1].innerHTML);
-            
-            
-            
-            
-            
+
             var sourceText = __allMessages[__allMessages.length - 1].innerHTML;
             var mediaTag = sourceText.split("<")[1];
+
             var decodeText = context.decryptAlgorithm(sourceText.split("<")[0]);
             if(decodeText !== false){   //  Если декодирование дало положительный результат.
                 console.log("Сообщение успешно раскодировано! Результат:", decodeText);
@@ -374,12 +368,6 @@ class DecryptingMessages{
      * @returns {DecryptingMessages.decryptAlgorithm.secondHalf|DecryptingMessages.decryptAlgorithm.firstHalf}
      */
     decryptAlgorithm(__source){
-        
-        //  Для начала получаем общий секретный ключ беседы из локального хранилища.
-        
-        
-        
-        
         var _Base64 = new Base64();
         
         var receiverSalt = "cecf88db41531add5d0cefaa83fedb38"; // Соль и литерал - такие же, как и у отправителя
