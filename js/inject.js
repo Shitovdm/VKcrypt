@@ -20,7 +20,7 @@ window.onload = function(){
     var __Listeners = new Listeners();
     var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
     
-    
+    /*
     //  Этот код перенести в демона, так как состояние шифрования и локация может быть изменена без перезагрузки страницы.
     if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.    
         chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
@@ -38,7 +38,7 @@ window.onload = function(){
             }
         }); 
     }
-
+*/
    
     
     //  Запуск главного демона, обрабатывающего принятые сообщения, отправленные сообщения и .
@@ -942,9 +942,9 @@ class Listeners{
                     onOpenDialogListener();  //  Управляет отображением кнопки шифрования и показом и отправков уведомлений.
                 }
                 
-                onLoadPageDecryptAllMsg();
+                onLoadPageDecryptAllMsg();  //  Метод дешифрует все сообщения при открытии страницы с диалогом.
                 
-                messageListener();  //  Проверяем наличие новых сообщений.
+                messageListener();          //  Метод проверяет наличие новых сообщений, служебные обрабатывает, обычные дешифрует.
             }else{
                 context.onLoadDecryptLastUserID = null;
                 //console.log("Пользователь ушел со страницы с диалогом.");
