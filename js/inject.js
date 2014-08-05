@@ -316,14 +316,11 @@ class CryptingMessages{
 
 class DecryptingMessages{
     
-    constructor(){
-        
-    };
-    
+    /**
+     * Метод расшифровывает ранее написанные сообщения, должен вызываться при загрузке страницы.
+     * @returns {undefined}
+     */
     decryptAllMessage(){
-        
-        console.log("Приступаю к расшифровке...");
-        
         var __allMessages = document.getElementsByClassName("im-mess--text");
         for(var i = 0; i < __allMessages.length; i++){
             //console.log("Source message text: ", __allMessages[i].innerHTML);
@@ -331,10 +328,11 @@ class DecryptingMessages{
             if(decryptMsg !== false){   //  Декодирует сообщение.
                 __allMessages[i].innerHTML = decryptMsg;
             }else{  //  Сообщение не является закодированым.
-                //console.log("Сообщение '" , __allMessages[i].innerHTML , "' не является закодированым!");
+                
             }
         }
     }
+    
     
     /**
      * Метод расшифровывает последнее сообщение.
@@ -403,17 +401,15 @@ class DecryptingMessages{
 
             // Формируем выход 
             var receiverOutput = firstHalf + secondHalf;
-            console.log(receiverOutput);
 
             return receiverOutput;
+            
         }else{
             //  Сообщение находится в незакодированном виде!
             return false;
-        }
-
-        
+        } 
     }
-     
+    
 }
 
 
@@ -756,6 +752,9 @@ class Listeners{
         this.lastMessage = "";
         this.userFullName = null;
         this.userName = null;
+        
+        this.onLoadDecryptFlag = false;
+        this.onLoadDecryptLastUserID = null;
     }
     
     /*
@@ -931,21 +930,60 @@ class Listeners{
     daemonListener(){
         var onOpenDialogListener = this.onOpenDialogListener.bind(this);
         var messageListener = this.messageListener.bind(this);
-        
+        var onLoadPageDecryptAllMsg = this.onLoadPageDecryptAllMsg.bind(this);
+        var context = this;
         window.setInterval(function(){
             
             if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
                 
-                
+                //  Управление визуальными объектами.
                 if(document.getElementById("encrypt-state") === null){  //  Если чекбокс еще не был создан.
                     //  Создание чекбокса шифрования.
                     onOpenDialogListener();  //  Управляет отображением кнопки шифрования и показом и отправков уведомлений.
                 }
                 
+                onLoadPageDecryptAllMsg();
+                
                 messageListener();  //  Проверяем наличие новых сообщений.
+            }else{
+                context.onLoadDecryptLastUserID = null;
+                //console.log("Пользователь ушел со страницы с диалогом.");
             }
 
         }, this.updateTime);
+    }
+    
+    /**
+     * Метод расшифровки ранее принятых и отправленных сообщений.
+     * @returns {undefined}
+     */
+    onLoadPageDecryptAllMsg(){
+        
+        var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+        
+        if(this.onLoadDecryptLastUserID !== userID){
+            //  Записываем идентификатор пользователя. Данное действие необходимо для того, чтобы предотвратить цикличную расшифровку уже расшифрованных сообщений.
+            this.onLoadDecryptLastUserID = userID;
+
+            //  Расшифровываем все сообщения.
+            chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
+                //var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+                var conversations = storage['conversations'] || null;
+                if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
+                    var id = conversations[userID] || null;
+                    if(id.cryptState === "established"){
+                        //  Расшифровка ранее принятых и написанных сообщений.
+                        //console.log("Расшифровываем все сообщения.");
+                        var _DecryptingMessages = new DecryptingMessages;
+                        _DecryptingMessages.decryptAllMessage();
+                    }
+                }
+            });
+        }else{
+            //  Сообщения в этом диалоге уже расшифрованы!
+            //console.log("Сообщения в этом диалоге уже расшифрованы!");
+        }
+        
     }
     
 }
