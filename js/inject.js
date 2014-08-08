@@ -253,6 +253,12 @@ class CryptingMessages{
         }
     }
     
+    /**
+     * Метод кодирует произвольный текст.
+     * @param {type} __source
+     * @param {type} SecretKey
+     * @returns {String|CryptingMessages.encryptAlgorithm.RevEncFirstHalfMess|CryptingMessages.encryptAlgorithm.Enc_1_3_Salt|CryptingMessages.encryptAlgorithm.Enc_2_3_Salt|CryptingMessages.encryptAlgorithm.RevEncSecHalfMess}
+     */
     encryptAlgorithm(__source, SecretKey){
         
         var _Base64 = new Base64();
