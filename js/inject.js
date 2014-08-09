@@ -308,7 +308,11 @@ class CryptingMessages{
     
     
     
-    
+    /**
+     * Метод добавления соли к кодированому сообщению.
+     * @param {type} __source
+     * @returns {CryptingMessages.encryptAddSault._encoded}
+     */
     encryptAddSault(__source){
         var _encoded = __source;
         
