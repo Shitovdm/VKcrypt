@@ -323,6 +323,10 @@ class CryptingMessages{
 }
 
 
+/**
+ * Класс реализует методы дешифровки сообщений.
+ * @type type
+ */
 class DecryptingMessages{
     
     /**
