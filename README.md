@@ -1,2 +1,2 @@
 # VKcrypt
-Helps maintain confidentiality of correspondence.
+Helps to maintain confidentiality of correspondence.
