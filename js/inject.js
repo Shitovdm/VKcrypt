@@ -392,7 +392,28 @@ class DecryptingMessages{
             var decodeText = context.decryptAlgorithm(sourceText.split("<")[0]);
             if(decodeText !== false){   //  Если декодирование дало положительный результат.
                 console.log("Сообщение успешно раскодировано! Результат:", decodeText);
-                __allMessages[__allMessages.length - 1].innerHTML = decodeText + "<" + mediaTag;
+                
+                //  Тут все сложно.
+                //  Ожидаем пока сервер вернет отправленное сообщение.
+                var counter = 0;
+                var maxPending = 2000;
+                
+                var pending = setInterval(function(){
+                    if( counter > (maxPending / 50) ){
+                        console.log("Ожидание сообщения истекло!");
+                        __allMessages[__allMessages.length - 1].innerHTML = "Расшифровка сообщения прошла неудачно(Ошибка 1002)";
+                        clearInterval(pending);
+                    }else{
+                        if(__allMessages[__allMessages.length - 1].innerHTML === sourceText){
+                            console.log("Сервер вернул сообщение схожее с отправленным.!");
+                            __allMessages[__allMessages.length - 1].innerHTML = decodeText + "<" + mediaTag;
+                            clearInterval(pending);
+                        }
+                    }
+                    
+                    counter++;
+                }, 50);
+                
             }else{
                 console.log("Сообщение находится в незакодированном виде! Результат:", sourceText);
             }
