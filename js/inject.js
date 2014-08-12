@@ -19,7 +19,7 @@ window.onload = function(){
     var __Listeners = new Listeners();
     var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
     
-    /*
+    
     //  Этот код перенести в демона, так как состояние шифрования и локация может быть изменена без перезагрузки страницы.
     if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.    
         chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
@@ -37,7 +37,7 @@ window.onload = function(){
             }
         }); 
     }
-*/
+
    
     
     //  Запуск главного демона, обрабатывающего принятые сообщения, отправленные сообщения и .
@@ -156,6 +156,7 @@ class DOMobjectsActions{
         var showDefaultButton = this.showDefaultButton.bind(this);
         var setInnersVars = this.setInnersVars.bind(this);
         
+        console.log("При изменении содержимого поля ввода текста.");
         document.getElementsByClassName("im-chat-input--text")[0].addEventListener("DOMSubtreeModified", function() {   //  При изменении содержимого поля ввода текста.
             //  Устанавливаем значение переменных содержащих элементы DOM.
             setInnersVars();
@@ -167,9 +168,13 @@ class DOMobjectsActions{
                 var cryptBTN = document.getElementsByClassName("crypt-btn")[0];     //  Элемент фейковой кнопки.
                 if(cryptBTN === undefined){     //  Если фейковая кнопка еще не была создана.
                     createFakeSendButton();     //  Создаем фейковую кнопку.
+                    console.log("Создаем фейковую кнопку!");
+                }else{
+                    console.log("Фейковая кнопка уже создана!");
                 }
             }else{  //  Если поле ввода текста опустошено. Показываем кнопку отправки голосового сообщения.
                 showDefaultButton();
+                console.log("Показываем кнопку отправки голосового сообщения.");
             }
 
         });
@@ -749,6 +754,7 @@ class MainActions{
                 ((messageContent.split("]:")[1]).split("<br>")[0] !== " Открытый ключ шифрования: ") &&
                 ((messageContent.split("]:")[1]).split("<br>")[0] !== " Защищённая передача данных установлена!") &&
                 ((messageContent.split("]:")[1]).split("<br>")[0] !== " Разрываю защищенное соединение!"))  ){
+
 
             //  Если состояние шифрования имеет статус established.
             chrome.storage.local.get(function(storage){
