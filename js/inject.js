@@ -52,18 +52,23 @@ window.onload = function(){
  * @type type
  */
 class DOMobjectsActions{
+    
+    /**
+     * Конструктор.
+     * @returns {DOMobjectsActions}
+     */
     constructor(){
         this.container = null;              //  Родитель элементов отправки сообщений.
         this.textFieldContent = null;       //  Содержимое текстового поля ввода сообщения.
-        this.defaultSendButton = null;      //  Элемент дефолтной кнопки отправки сообщения.
-        
+        this.defaultSendButton = null;      //  Элемент дефолтной кнопки отправки сообщения.        
         this.sendBTN = null;
         this.messageCounter = 0;
-        
-        
     }
     
-    
+    /**
+     * Метод находит элемент кнопки отправки сообщения.
+     * @returns {undefined}
+     */
     parseSendElement(){
         var location = window.location.href; 
         if(location.split("?")[0] === "https://vk.com/im"){ //  Если эта страница с диалогаями.
@@ -75,7 +80,10 @@ class DOMobjectsActions{
        }     
     }
     
-    
+    /**
+     * Метод возвращает дефолтную кнопку отправки сообщения.
+     * @returns {undefined}
+     */
     showDefaultButton(){
         console.log("Поле ввода текста опустошено!");
         console.log(document.getElementById("encrypt"));
@@ -87,7 +95,10 @@ class DOMobjectsActions{
         }
     }
     
-    
+    /**
+     * Метод скрывает дефолтную кнопку отправки сообщения.
+     * @returns {undefined}
+     */
     hideDefaultSendButton(){
         if(this.defaultSendButton){ //  Если присутствует дефолтная кнопка отправки сообщения.
             this.defaultSendButton.style.display = "none";  //  Скрываем дефолтную кнопку отправки сообщения.
@@ -134,7 +145,10 @@ class DOMobjectsActions{
           
     }
     
-    
+    /**
+     * Метод управляет кнопкой отправки сообщения(скрывает/показывает дефолную/фейковую кнопку отправки сообщения).
+     * @returns {undefined}
+     */
     textFieltChangeListener(){
         
         var hideDefaultSendButton = this.hideDefaultSendButton.bind(this);
@@ -162,14 +176,15 @@ class DOMobjectsActions{
         
     }
     
-    
+    /**
+     * Метод сбратывает до дефолтных параметров.
+     * @returns {undefined}
+     */
     setInnersVars(){
         this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
         this.textFieldContent = document.getElementsByClassName("im-chat-input--text")[0].innerHTML;
         this.defaultSendButton = document.getElementsByClassName("im-send-btn_send")[0];
-    }
-    
-    
+    } 
     
     /**
      * Метод эмулирует клик по элементу.
@@ -199,6 +214,10 @@ class DOMobjectsActions{
 
 class Parse{
     
+    /**
+     * Метод транслирует все смайлики в текстовое представление.
+     * @returns {undefined}
+     */
     emojiCheck(){
     
     }
@@ -209,6 +228,10 @@ class Parse{
 
 class CryptingMessages{
     
+    /**
+     * Метод шифрует одно сообщение.
+     * @returns {undefined}
+     */
     encryptMessage(){
         
         //var _Decrypt = new Decrypt;
