@@ -383,42 +383,48 @@ class DecryptingMessages{
         var context = this;
         setTimeout(function(){
             var __allMessages = document.getElementsByClassName("im-mess--text");
-            var messagesCount = __allMessages.length;
-            console.log("Расшифровать последнее сообщение: ", __allMessages[__allMessages.length - 1].innerHTML);
+            var lastMessage = __allMessages.length - 1;
+            console.log("Расшифровать последнее сообщение: ", __allMessages[lastMessage].innerHTML);
 
-            var sourceText = __allMessages[__allMessages.length - 1].innerHTML;
+            var sourceText = __allMessages[lastMessage].innerHTML;
             var mediaTag = sourceText.split("<")[1];
 
             var decodeText = context.decryptAlgorithm(sourceText.split("<")[0]);
             if(decodeText !== false){   //  Если декодирование дало положительный результат.
                 console.log("Сообщение успешно раскодировано! Результат:", decodeText);
-                
-                //  Тут все сложно.
-                //  Ожидаем пока сервер вернет отправленное сообщение.
-                var counter = 0;
-                var maxPending = 2000;
-                
-                var pending = setInterval(function(){
-                    if( counter > (maxPending / 50) ){
-                        console.log("Ожидание сообщения истекло!");
-                        __allMessages[__allMessages.length - 1].innerHTML = "Расшифровка сообщения прошла неудачно(Ошибка 1002)";
-                        clearInterval(pending);
-                    }else{
-                        if(__allMessages[__allMessages.length - 1].innerHTML === sourceText){
-                            console.log("Сервер вернул сообщение схожее с отправленным.!");
-                            __allMessages[__allMessages.length - 1].innerHTML = decodeText + "<" + mediaTag;
-                            clearInterval(pending);
-                        }
-                    }
-                    
-                    counter++;
-                }, 50);
-                
+                //  Заменяем текст в контейнере раскодированным сообщением.
+                __allMessages[lastMessage].innerHTML = decodeText + "<" + mediaTag;                
             }else{
                 console.log("Сообщение находится в незакодированном виде! Результат:", sourceText);
             }
             
         }, 0);
+    }
+    
+    /**
+     * Метод декодирует несколько последних сообщений.
+     * Метод необходим для раскодирования сообщений, полученных при отправке нового сообщения(одновременно, или с небольшим отклонением).
+     * @returns {undefined}
+     */
+    decryptSomeMessages(){
+        var amountMassages = 4;
+        var context = this;
+        //  Контейнер со всеми сообщениями.
+        var __allMessages = document.getElementsByClassName("im-mess--text");
+        //  Перебираем несколько последних сообщений.
+        for(var i = __allMessages.length - 1; i > __allMessages.length - amountMassages; i--){
+            var sourceText = __allMessages[i].innerHTML;
+            var mediaTag = sourceText.split("<")[1];
+            
+            var decodeText = context.decryptAlgorithm(sourceText.split("<")[0]);
+            if(decodeText !== false){   //  Если декодирование дало положительный результат.
+                //console.log("Сообщение успешно раскодировано! Результат:", decodeText);
+                //  Заменяем текст в контейнере раскодированным сообщением.
+                __allMessages[i].innerHTML = decodeText + "<" + mediaTag;                
+            }else{
+                //console.log("Сообщение находится в незакодированном виде! Результат:", sourceText);
+            }
+        }
     }
     
     
@@ -757,7 +763,8 @@ class MainActions{
      * @param {type} currentMessage
      * @returns {undefined}
      */
-    otherMessages(__allMessages, currentMessage){
+    otherMessages(){
+        var __allMessages = document.getElementsByClassName("im-mess--text");                       //  Все сообщения.
         
         var _DOMobjectsActions = this._DOMobjectsActions;
         var keyGeneration = this.keyGeneration;
@@ -766,7 +773,7 @@ class MainActions{
         var senderName = this.senderName;
         var userID = this.userID;
         
-        var messageContent = currentMessage.split("<div")[0];
+        var messageContent = __allMessages[__allMessages.length - 1].innerHTML.split("<div")[0];
 
         //  Если это не сообщение подтверждения установки шифрования или его окончания или в сообщении нет "]:".
         if( ((messageContent.split("]:")[1]) === undefined) ||  
@@ -785,8 +792,8 @@ class MainActions{
                     if(id.cryptState === "established"){
                         //  Декодировка сообщения.
                         var _DecryptingMessages = new DecryptingMessages;
-                        _DecryptingMessages.decryptLastMessage();
-                        
+                        //_DecryptingMessages.decryptLastMessage();
+                        _DecryptingMessages.decryptSomeMessages();  //  Декодируем несколько последних сообщений.
                         //__allMessages[__allMessages.length - 1].innerHTML = messageContent + " encrypted message_";
                         
                         
@@ -865,10 +872,7 @@ class Listeners{
                         mainActions.breakConnection();
                         break;
                     
-                    //  Все сообщения.
-                    default:
-                        mainActions.otherMessages(__allMessages, this.lastMessage);
-                        break;  
+
                 }   
             }
         }
@@ -1001,6 +1005,8 @@ class Listeners{
         var onOpenDialogListener = this.onOpenDialogListener.bind(this);
         var messageListener = this.messageListener.bind(this);
         var onLoadPageDecryptAllMsg = this.onLoadPageDecryptAllMsg.bind(this);
+        var _DecryptingMessages = new DecryptingMessages;
+        var _MainActions = new MainActions;
         var context = this;
         window.setInterval(function(){
             
@@ -1015,6 +1021,9 @@ class Listeners{
                 onLoadPageDecryptAllMsg();  //  Метод дешифрует все сообщения при открытии страницы с диалогом.
                 
                 messageListener();          //  Метод проверяет наличие новых сообщений, служебные обрабатывает, обычные дешифрует.
+                
+                _MainActions.otherMessages();   //  
+                
             }else{
                 context.onLoadDecryptLastUserID = null;
                 //console.log("Пользователь ушел со страницы с диалогом.");
