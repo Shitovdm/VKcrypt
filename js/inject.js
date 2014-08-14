@@ -758,81 +758,26 @@ class MainActions{
     }
     
     
-    /*
-     * Метод обрабатывает все сообщения кроме служебных.
-     * @param {type} __allMessages
-     * @param {type} currentMessage
-     * @returns {undefined}
-     */
-    otherMessages(){
-        var __allMessages = document.getElementsByClassName("im-mess--text");                       //  Все сообщения.
-        
-        var _DOMobjectsActions = this._DOMobjectsActions;
-        var keyGeneration = this.keyGeneration;
-        var LocalStorage = this.LocalStorage;
-        var NotificationsAndMessaging = this.NotificationsAndMessaging;
-        var senderName = this.senderName;
-        var userID = this.userID;
-        
-        var messageContent = __allMessages[__allMessages.length - 1].innerHTML.split("<div")[0];
-
-        //  Если это не сообщение подтверждения установки шифрования или его окончания или в сообщении нет "]:".
-        if( ((messageContent.split("]:")[1]) === undefined) ||  
-            (   ((messageContent.split("]:")[1]).split("<br>")[0] !== " Предлагаю Вам перейти к защищенной беседе. ") &&
-                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Принимаю Ваше предложение. ") &&
-                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Открытый ключ шифрования: ") &&
-                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Защищённая передача данных установлена!") &&
-                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Разрываю защищенное соединение!"))  ){
-
-
-            //  Если состояние шифрования имеет статус established.
-            chrome.storage.local.get(function(storage){
-                var conversations = storage['conversations'] || null;
-                if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
-                    var id = conversations[userID] || null;
-                    if(id.cryptState === "established"){
-                        //  Декодировка сообщения.
-                        var _DecryptingMessages = new DecryptingMessages;
-                        //_DecryptingMessages.decryptLastMessage();
-                        _DecryptingMessages.decryptSomeMessages();  //  Декодируем несколько последних сообщений.
-                        //__allMessages[__allMessages.length - 1].innerHTML = messageContent + " encrypted message_";
-                        
-                        
-                        //  Замена декодированным сообщением.
-                        
-                        
-                        
-                        
-                    }
-                }
-            });
-        }
-    }
+    
     
 }
 
-
-/*
- * Класс содержит методы демонов, реагирующих на определенные действия.
- * @type class
+/**
+ * Клас реализует методы обработчики принятых и отправленных сообщений.
+ * @type type
  */
-class Listeners{
+class MessageHandler{
     
     constructor(){
-        this.updateTime = 500;
-        this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
-        this.sendBTN = this.container.children[6];  //  Элемент отправки сообщения.
         this.messageCounter = 0;
         this.lastMessage = "";
         this.userFullName = null;
         this.userName = null;
-        
-        this.onLoadDecryptFlag = false;
-        this.onLoadDecryptLastUserID = null;
+        this.userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1]; //  ID пользователя в системе VK.
     }
     
     /*
-     * Метод обрабатывает новые сообщения.
+     * Метод обрабатывает только служебные сообщения.
      * @returns {undefined}
      */
     messageListener(){
@@ -849,6 +794,7 @@ class Listeners{
                 
                 //  Определяем принятое сообщения и вызываем метод, обрабатывающий данное сообщение.
                 switch (this.lastMessage.split("<")[0]){
+                    
                     //  Команда начала создания первичных открытых ключей.
                     case "[" + this.userName + "]: Предлагаю Вам перейти к защищенной беседе. ":
                         mainActions.invitation(this.lastMessage);
@@ -872,14 +818,63 @@ class Listeners{
                     case "[" + this.userName + "]: Разрываю защищенное соединение!":
                         mainActions.breakConnection();
                         break;
-                    
-
                 }   
             }
         }
     }
     
+    /**
+     * Метод обрабатывает все сообщения кроме служебных.
+     * @returns {undefined}
+     */
+    otherMessages(){
+        var __allMessages = document.getElementsByClassName("im-mess--text");                       //  Все сообщения.
+        
+        var userID = this.userID;
+        
+        var messageContent = __allMessages[__allMessages.length - 1].innerHTML.split("<div")[0];
+
+        //  Если это не сообщение подтверждения установки шифрования или его окончания или в сообщении нет "]:".
+        if( ((messageContent.split("]:")[1]) === undefined) ||  
+            (   ((messageContent.split("]:")[1]).split("<br>")[0] !== " Предлагаю Вам перейти к защищенной беседе. ") &&
+                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Принимаю Ваше предложение. ") &&
+                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Открытый ключ шифрования: ") &&
+                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Защищённая передача данных установлена!") &&
+                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Разрываю защищенное соединение!"))  ){
+
+
+            //  Если состояние шифрования имеет статус established.
+            chrome.storage.local.get(function(storage){
+                var conversations = storage['conversations'] || null;
+                if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
+                    var id = conversations[userID] || null;
+                    if(id.cryptState === "established"){
+                        //  Декодировка сообщения.
+                        var _DecryptingMessages = new DecryptingMessages;
+                        _DecryptingMessages.decryptSomeMessages();  //  Декодируем несколько последних сообщений.
+                    }
+                }
+            });
+        }
+    }
     
+}
+
+
+/*
+ * Класс содержит методы демонов, реагирующих на определенные действия.
+ * @type class
+ */
+class Listeners{
+    
+    constructor(){
+        this.updateTime = 500;
+        this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
+        this.sendBTN = this.container.children[6];  //  Элемент отправки сообщения.
+        
+        this.onLoadDecryptFlag = false;
+        this.onLoadDecryptLastUserID = null;
+    }
     
     /*
      * Метод определяет действия на странице диалогов.
@@ -1003,12 +998,11 @@ class Listeners{
      * @returns {undefined}
      */
     daemonListener(){
-        var onOpenDialogListener = this.onOpenDialogListener.bind(this);
-        var messageListener = this.messageListener.bind(this);
-        var onLoadPageDecryptAllMsg = this.onLoadPageDecryptAllMsg.bind(this);
-        var _DecryptingMessages = new DecryptingMessages;
-        var _MainActions = new MainActions;
+        
+        var _MessageHandler = new MessageHandler;
+        var _Listeners = new Listeners;
         var context = this;
+        
         window.setInterval(function(){
             
             if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.
@@ -1016,18 +1010,18 @@ class Listeners{
                 //  Управление визуальными объектами.
                 if(document.getElementById("encrypt-state") === null){  //  Если чекбокс еще не был создан.
                     //  Создание чекбокса шифрования.
-                    onOpenDialogListener();  //  Управляет отображением кнопки шифрования и показом и отправков уведомлений.
+                    _Listeners.onOpenDialogListener();  //  Управляет отображением кнопки шифрования и показом и отправков уведомлений.
                 }
                 
-                onLoadPageDecryptAllMsg();  //  Метод дешифрует все сообщения при открытии страницы с диалогом.
+                _Listeners.onLoadPageDecryptAllMsg();      //  Метод дешифрует все сообщения при открытии страницы с диалогом.
                 
-                messageListener();          //  Метод проверяет наличие новых сообщений, служебные обрабатывает, обычные дешифрует.
+                _MessageHandler.messageListener();              //  Метод Обработки служебных сообщений.
                 
-                _MainActions.otherMessages();   //  
+                _MessageHandler.otherMessages();   //  Метод обработки всех сообщений, кроме служебных.
                 
             }else{
+                //  Пользователь ушел со страницы с диалогом.
                 context.onLoadDecryptLastUserID = null;
-                //console.log("Пользователь ушел со страницы с диалогом.");
             }
 
         }, this.updateTime);
