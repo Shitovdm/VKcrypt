@@ -17,6 +17,7 @@ window.onload = function(){
     
     
     var __Listeners = new Listeners();
+    /*
     var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
     
     
@@ -32,15 +33,14 @@ window.onload = function(){
                 if(id.cryptState === "established"){
                      //  Запуск отбработкика отправленных сообщений.
                      _DOMobjectsActions.textFieltChangeListener();   //  Запускаем обработкик отправки и шифрования написанных сообщений.
-                }
-                
+                } 
             }
         }); 
     }
 
-   
+   */
     
-    //  Запуск главного демона, обрабатывающего принятые сообщения, отправленные сообщения и .
+    //  Запуск главного демона, обрабатывающего принятые сообщения, отправленные сообщения.
     __Listeners.daemonListener();
 
 };
@@ -53,10 +53,6 @@ window.onload = function(){
  */
 class DOMobjectsActions{
     
-    /**
-     * Конструктор.
-     * @returns {DOMobjectsActions}
-     */
     constructor(){
         this.container = null;              //  Родитель элементов отправки сообщений.
         this.textFieldContent = null;       //  Содержимое текстового поля ввода сообщения.
@@ -227,10 +223,12 @@ class Parse{
     
     }
     
-    
 }
 
-
+/**
+ * Класс реализует методы шифровки сообщений.
+ * @type type
+ */
 class CryptingMessages{
     
     /**
@@ -238,8 +236,6 @@ class CryptingMessages{
      * @returns {undefined}
      */
     encryptMessage(){
-        
-        //var _Decrypt = new Decrypt;
         
         var textfield = document.getElementsByClassName("im_editable");
         var sourceText = textfield[0].innerHTML;
@@ -332,10 +328,6 @@ class CryptingMessages{
         return output;
     }
     
-    
-    
-    
-    
     /**
      * Метод добавления соли к кодированому сообщению.
      * @param {type} __source
@@ -346,8 +338,7 @@ class CryptingMessages{
         
         return _encoded;
     }
-    
-    
+      
 }
 
 
@@ -723,7 +714,6 @@ class MainActions{
                                     NotificationsAndMessaging.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
                                     //console.log("Собеседнику отправлено уведомление о том, что защищённая передача данных установлена.");
                                     //  Изменяем состояние чекбокса.
-                                    console.log("Поиск бага...Метка 3");
                                     _DOMobjectsActions.changeCryptState("established");
                                     console.log("Шифрование успешно включено!");
                                 })
@@ -753,12 +743,9 @@ class MainActions{
      * Метод вызывается при успешном соединении.
      * @returns {undefined}
      */
-    successfulConnection(){
+    successfullConnection(){
         console.log("Шифрование успешно включено!");
     }
-    
-    
-    
     
 }
 
@@ -780,7 +767,7 @@ class MessageHandler{
      * Метод обрабатывает только служебные сообщения.
      * @returns {undefined}
      */
-    messageListener(){
+    serviceMessages(){
         //  Обработка сообщений.       
         var __allMessages = document.getElementsByClassName("im-mess--text");                       //  Все сообщения.
         if(this.messageCounter !== __allMessages.length){                                           //  Если замечено изменение количество сообщений.
@@ -811,7 +798,7 @@ class MessageHandler{
                     
                     //  Инициатору шифрованной беседы.
                     case "[" + this.userName + "]: Защищённая передача данных установлена!":
-                        mainActions.successfulConnection();
+                        mainActions.successfullConnection();
                         break;
                     
                     //  Если собеседник закрыл защищенный канал связи.
@@ -828,7 +815,7 @@ class MessageHandler{
      * @returns {undefined}
      */
     otherMessages(){
-        var __allMessages = document.getElementsByClassName("im-mess--text");                       //  Все сообщения.
+        var __allMessages = document.getElementsByClassName("im-mess--text");   //  Все сообщения.
         
         var userID = this.userID;
         
@@ -874,6 +861,7 @@ class Listeners{
         
         this.onLoadDecryptFlag = false;
         this.onLoadDecryptLastUserID = null;
+        this.onLoadTextfielListenerFlag = false;
     }
     
     /*
@@ -909,20 +897,17 @@ class Listeners{
 
             if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
                 var id = conversations[userID] || null;
-
+                console.log(id.cryptState);
                 switch (id.cryptState){
                     case "pending": //  Ожидается подтверждение собеседника.
-                        console.log("Поиск бага...Метка 4");
                         _DOMobjectsActions.changeCryptState("pending");
                         break;
                         
                     case "established": //  Соединение установлено.
-                        console.log("Поиск бага...Метка 5");
                         _DOMobjectsActions.changeCryptState("established");
                         break;
 
                     case "error":   //  Соединение разорвано собеседником.
-                        console.log("Поиск бага...Метка 6");
                         _DOMobjectsActions.changeCryptState("error");
                         break;
                     
@@ -1013,15 +998,59 @@ class Listeners{
                     _Listeners.onOpenDialogListener();  //  Управляет отображением кнопки шифрования и показом и отправков уведомлений.
                 }
                 
-                _Listeners.onLoadPageDecryptAllMsg();      //  Метод дешифрует все сообщения при открытии страницы с диалогом.
+                //  
+                if(context.onLoadTextfielListenerFlag === false && document.getElementsByClassName("encrypt-chechbox")[0].checked !== false){
+                    console.log("Запуск ожидания изменения содержимого текстового поля для создания фейковой кнопки шифрования. ");
+                    var upTime = this.updateTime + 100;
+                    setTimeout(function(){
+                        context.onLoadTextfielListenerFlag = true;
+                        
+                        
+                        
+                    }, upTime);
+                    //  Запуск ожидания изменения содержимого текстового поля для создания фейковой кнопки шифрования.
+                        var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
+                        //  Проверка состояния шифрования и запуск обработчика шифрования и отправки написанного текста.
+                        if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.    
+                            chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
+                                var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
+                                var conversations = storage['conversations'] || null;
+                                if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
+                                    var id = conversations[userID] || null;
+                                    if(id.cryptState === "established" || id.cryptState === "pending"){
+                                         //  Запуск отбработкика отправленных сообщений.
+                                         console.log("2. Запускаем обработкик отправки и шифрования написанных сообщений.");
+                                         _DOMobjectsActions.textFieltChangeListener();   //  Запускаем обработкик отправки и шифрования написанных сообщений.
+                                    } 
+                                }
+                            }); 
+                        }
+                }else{
+                    if(document.getElementsByClassName("encrypt-chechbox")[0].checked === false){
+                        context.onLoadTextfielListenerFlag = false;
+                        
+                        // Если лиснер существует.
+                        
+                        //  Убиваем лиснер события изменения содержимого текстового поля.
+                        
+                        console.log("Если лиснер существует. Убиваем лиснер события изменения содержимого текстового поля.");
+                        
+                    }else{
+                        console.log("Обработчик отправки и шифровки сообщений уже включен.");
+                    }
+                    
+                }
                 
-                _MessageHandler.messageListener();              //  Метод Обработки служебных сообщений.
+                _Listeners.onLoadPageDecryptAllMsg();   //  Метод дешифрует все сообщения при открытии страницы с диалогом.
                 
-                _MessageHandler.otherMessages();   //  Метод обработки всех сообщений, кроме служебных.
+                _MessageHandler.serviceMessages();      //  Метод Обработки служебных сообщений.
+                
+                _MessageHandler.otherMessages();        //  Метод обработки всех сообщений, кроме служебных.
                 
             }else{
                 //  Пользователь ушел со страницы с диалогом.
                 context.onLoadDecryptLastUserID = null;
+                context.onLoadTextfielListenerFlag = false;
             }
 
         }, this.updateTime);
