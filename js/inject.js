@@ -60,6 +60,34 @@ class DOMobjectsActions{
         this.sendBTN = null;
         this.messageCounter = 0;
         this.imChatInputText = document.getElementsByClassName("im-chat-input--text")[0];        //  Элемент текстового поля, на него в дальнейшем вешается лиснер изменения содержимого.
+        
+
+        
+        this.tmptextFieldListenerMethod = function(e){
+
+            console.log("Управление событием при изменении контента текстфилда");
+            //  Устанавливаем значение переменных содержащих элементы DOM.
+            this.setInnersVars();
+
+            //  Скрываем дефолтную кнопку отправки текстового сообщения.
+            this.hideDefaultSendButton();
+
+            if(document.getElementsByClassName("im-chat-input--text")[0].innerHTML !== ""){        //  Если содержимое поля ввода не пустое.
+                var cryptBTN = document.getElementsByClassName("crypt-btn")[0];     //  Элемент фейковой кнопки.
+                if(cryptBTN === undefined){     //  Если фейковая кнопка еще не была создана.
+                    this.createFakeSendButton();     //  Создаем фейковую кнопку.
+                    console.log("Создаем фейковую кнопку!");
+                }else{
+                    console.log("Фейковая кнопка уже создана!");
+                }
+            }else{  //  Если поле ввода текста опустошено. Показываем кнопку отправки голосового сообщения.
+                this.showDefaultButton();
+                console.log("Показываем кнопку отправки голосового сообщения.");
+            }
+        };
+        
+        this.textFieldListenerMethodBinded = this.tmptextFieldListenerMethod.bind(this);
+        
     }
     
     /**
@@ -143,77 +171,20 @@ class DOMobjectsActions{
     }
     
     /**
-     * Метод управляет кнопкой отправки сообщения(скрывает/показывает дефолную/фейковую кнопку отправки сообщения).
+     * 
      * @returns {undefined}
      */
-    textFieltChangeListener(){
-        
-        var hideDefaultSendButton = this.hideDefaultSendButton.bind(this);
-        var createFakeSendButton = this.createFakeSendButton.bind(this);
-        var showDefaultButton = this.showDefaultButton.bind(this);
-        var setInnersVars = this.setInnersVars.bind(this);
-        
-        console.log("При изменении содержимого поля ввода текста.");
-        document.getElementsByClassName("im-chat-input--text")[0].addEventListener("DOMSubtreeModified", function() {   //  При изменении содержимого поля ввода текста.
-            //  Устанавливаем значение переменных содержащих элементы DOM.
-            setInnersVars();
-
-            //  Скрываем дефолтную кнопку отправки текстового сообщения.
-            hideDefaultSendButton();
-
-            if(document.getElementsByClassName("im-chat-input--text")[0].innerHTML !== ""){        //  Если содержимое поля ввода не пустое.
-                var cryptBTN = document.getElementsByClassName("crypt-btn")[0];     //  Элемент фейковой кнопки.
-                if(cryptBTN === undefined){     //  Если фейковая кнопка еще не была создана.
-                    createFakeSendButton();     //  Создаем фейковую кнопку.
-                    console.log("Создаем фейковую кнопку!");
-                }else{
-                    console.log("Фейковая кнопка уже создана!");
-                }
-            }else{  //  Если поле ввода текста опустошено. Показываем кнопку отправки голосового сообщения.
-                showDefaultButton();
-                console.log("Показываем кнопку отправки голосового сообщения.");
-            }
-
-        });
-        
-    }
-    
     textFieldAddListener(){
-        
-        this.imChatInputText.addEventListener("DOMSubtreeModified", this.textFieldListenerMethod());
-        
+        this.imChatInputText.addEventListener("DOMSubtreeModified", this.textFieldListenerMethodBinded);
     }
     
+    /**
+     * 
+     * @returns {undefined}
+     */
     textFieldRemoveListener(){
-        
-        this.imChatInputText.removeEventListener("DOMSubtreeModified", this.textFieldListenerMethod());
-        
+        this.imChatInputText.removeEventListener("DOMSubtreeModified", this.textFieldListenerMethodBinded);
     }
-    
-    textFieldListenerMethod(){
-        
-        //  Устанавливаем значение переменных содержащих элементы DOM.
-        this.setInnersVars();
-
-        //  Скрываем дефолтную кнопку отправки текстового сообщения.
-        this.hideDefaultSendButton();
-
-        if(document.getElementsByClassName("im-chat-input--text")[0].innerHTML !== ""){        //  Если содержимое поля ввода не пустое.
-            var cryptBTN = document.getElementsByClassName("crypt-btn")[0];     //  Элемент фейковой кнопки.
-            if(cryptBTN === undefined){     //  Если фейковая кнопка еще не была создана.
-                this.createFakeSendButton();     //  Создаем фейковую кнопку.
-                console.log("Создаем фейковую кнопку!");
-            }else{
-                console.log("Фейковая кнопка уже создана!");
-            }
-        }else{  //  Если поле ввода текста опустошено. Показываем кнопку отправки голосового сообщения.
-            this.showDefaultButton();
-            console.log("Показываем кнопку отправки голосового сообщения.");
-        }
-        
-    }
-    
-    
     
     /**
      * Метод сбратывает до дефолтных параметров.
@@ -1069,7 +1040,7 @@ class Listeners{
                         context.onLoadTextfielListenerFlag = false;
                         
                         // Если лиснер существует.
-                        //_DOMobjectsActions.textFieldRemoveListener();
+                        _DOMobjectsActions.textFieldRemoveListener();
                         //  Убиваем лиснер события изменения содержимого текстового поля.
                         
                         
