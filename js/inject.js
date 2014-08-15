@@ -59,6 +59,7 @@ class DOMobjectsActions{
         this.defaultSendButton = null;      //  Элемент дефолтной кнопки отправки сообщения.        
         this.sendBTN = null;
         this.messageCounter = 0;
+        this.imChatInputText = document.getElementsByClassName("im-chat-input--text")[0];        //  Элемент текстового поля, на него в дальнейшем вешается лиснер изменения содержимого.
     }
     
     /**
@@ -176,6 +177,43 @@ class DOMobjectsActions{
         });
         
     }
+    
+    textFieldAddListener(){
+        
+        this.imChatInputText.addEventListener("DOMSubtreeModified", this.textFieldListenerMethod());
+        
+    }
+    
+    textFieldRemoveListener(){
+        
+        this.imChatInputText.removeEventListener("DOMSubtreeModified", this.textFieldListenerMethod());
+        
+    }
+    
+    textFieldListenerMethod(){
+        
+        //  Устанавливаем значение переменных содержащих элементы DOM.
+        this.setInnersVars();
+
+        //  Скрываем дефолтную кнопку отправки текстового сообщения.
+        this.hideDefaultSendButton();
+
+        if(document.getElementsByClassName("im-chat-input--text")[0].innerHTML !== ""){        //  Если содержимое поля ввода не пустое.
+            var cryptBTN = document.getElementsByClassName("crypt-btn")[0];     //  Элемент фейковой кнопки.
+            if(cryptBTN === undefined){     //  Если фейковая кнопка еще не была создана.
+                this.createFakeSendButton();     //  Создаем фейковую кнопку.
+                console.log("Создаем фейковую кнопку!");
+            }else{
+                console.log("Фейковая кнопка уже создана!");
+            }
+        }else{  //  Если поле ввода текста опустошено. Показываем кнопку отправки голосового сообщения.
+            this.showDefaultButton();
+            console.log("Показываем кнопку отправки голосового сообщения.");
+        }
+        
+    }
+    
+    
     
     /**
      * Метод сбратывает до дефолтных параметров.
@@ -852,7 +890,7 @@ class MessageHandler{
  * Класс содержит методы демонов, реагирующих на определенные действия.
  * @type class
  */
-class Listeners{
+class Listeners{    
     
     constructor(){
         this.updateTime = 500;
@@ -986,6 +1024,7 @@ class Listeners{
         
         var _MessageHandler = new MessageHandler;
         var _Listeners = new Listeners;
+        var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
         var context = this;
         
         window.setInterval(function(){
@@ -1009,7 +1048,7 @@ class Listeners{
                         
                     }, upTime);
                     //  Запуск ожидания изменения содержимого текстового поля для создания фейковой кнопки шифрования.
-                        var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
+                        //var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
                         //  Проверка состояния шифрования и запуск обработчика шифрования и отправки написанного текста.
                         if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.    
                             chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
@@ -1020,7 +1059,7 @@ class Listeners{
                                     if(id.cryptState === "established" || id.cryptState === "pending"){
                                          //  Запуск отбработкика отправленных сообщений.
                                          console.log("2. Запускаем обработкик отправки и шифрования написанных сообщений.");
-                                         _DOMobjectsActions.textFieltChangeListener();   //  Запускаем обработкик отправки и шифрования написанных сообщений.
+                                         _DOMobjectsActions.textFieldAddListener();   //  Запускаем обработкик отправки и шифрования написанных сообщений.
                                     } 
                                 }
                             }); 
@@ -1030,8 +1069,9 @@ class Listeners{
                         context.onLoadTextfielListenerFlag = false;
                         
                         // Если лиснер существует.
-                        
+                        //_DOMobjectsActions.textFieldRemoveListener();
                         //  Убиваем лиснер события изменения содержимого текстового поля.
+                        
                         
                         console.log("Если лиснер существует. Убиваем лиснер события изменения содержимого текстового поля.");
                         
