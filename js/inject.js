@@ -17,31 +17,15 @@ window.onload = function(){
     
     
     var __Listeners = new Listeners();
-    /*
-    var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
-    
-    
-    //  Этот код перенести в демона, так как состояние шифрования и локация может быть изменена без перезагрузки страницы.
-    if((window.location.href.split("?")[0] === "https://vk.com/im") && (window.location.href.indexOf("sel") !== -1)){ //  Если эта страница с диалогаями.    
-        chrome.storage.local.get(function(storage){ //  Определяем состояние шифрования.
-            var userID = window.location.href.split("?sel=")[1] || window.location.href.split("&sel=")[1];
-            var conversations = storage['conversations'] || null;
-
-            if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
-                var id = conversations[userID] || null;
-
-                if(id.cryptState === "established"){
-                     //  Запуск отбработкика отправленных сообщений.
-                     _DOMobjectsActions.textFieltChangeListener();   //  Запускаем обработкик отправки и шифрования написанных сообщений.
-                } 
-            }
-        }); 
-    }
-
-   */
     
     //  Запуск главного демона, обрабатывающего принятые сообщения, отправленные сообщения.
     __Listeners.daemonListener();
+    
+    //  Запуск обработчика переопределения назначения клавиши Enter.
+    //  Необходим для корректной отправки зашифрованных сообщением нажатием клавиши Enter.
+    __Listeners.keyEnterHandler();
+    
+    //  Метод определяет начальное значение текстового поля ввода сообщения.
 
 };
 
@@ -64,8 +48,6 @@ class DOMobjectsActions{
 
         
         this.tmptextFieldListenerMethod = function(e){
-
-            console.log("Управление событием при изменении контента текстфилда");
             //  Устанавливаем значение переменных содержащих элементы DOM.
             this.setInnersVars();
 
@@ -76,13 +58,13 @@ class DOMobjectsActions{
                 var cryptBTN = document.getElementsByClassName("crypt-btn")[0];     //  Элемент фейковой кнопки.
                 if(cryptBTN === undefined){     //  Если фейковая кнопка еще не была создана.
                     this.createFakeSendButton();     //  Создаем фейковую кнопку.
-                    console.log("Создаем фейковую кнопку!");
+                    //console.log("Создаем фейковую кнопку!");
                 }else{
-                    console.log("Фейковая кнопка уже создана!");
+                    //console.log("Фейковая кнопка уже создана!");
                 }
             }else{  //  Если поле ввода текста опустошено. Показываем кнопку отправки голосового сообщения.
                 this.showDefaultButton();
-                console.log("Показываем кнопку отправки голосового сообщения.");
+                //console.log("Показываем кнопку отправки голосового сообщения.");
             }
         };
         
@@ -97,10 +79,10 @@ class DOMobjectsActions{
     parseSendElement(){
         var location = window.location.href; 
         if(location.split("?")[0] === "https://vk.com/im"){ //  Если эта страница с диалогаями.
-            console.log("Удаление кнопки отправки сообщения...");
+            //console.log("Удаление кнопки отправки сообщения...");
             this.container = document.getElementsByClassName("im-chat-input--txt-wrap")["0"];    //  Родитель элементов отправки сообщений.
             this.sendBTN = this.container.children[6];
-            console.log(this.container.children[6]);
+            //console.log(this.container.children[6]);
             this.container.removeChild(this.container.children[6]); //  Удаление кнопки отправки.
        }     
     }
@@ -110,8 +92,6 @@ class DOMobjectsActions{
      * @returns {undefined}
      */
     showDefaultButton(){
-        console.log("Поле ввода текста опустошено!");
-        console.log(document.getElementById("encrypt"));
         //  Показываем кнопку отправки голосового сообщения.
         document.getElementsByClassName("im-send-btn_send")[0].style.display = "block";  //  Скрываем дефолтную кнопку отправки сообщения.
         //  Удаляем фейковую кнопку.
@@ -135,7 +115,7 @@ class DOMobjectsActions{
      * @returns {undefined}
      */
     createFakeSendButton(){
-        console.log("Создаем фейковую кнопку.");
+        //console.log("Создаем фейковую кнопку.");
         //  Создаем новую кнопку, которая будет внешне идентична оригиналу, но иметь отличный функционал.
         var cryptButton = document.createElement("button");
         cryptButton.setAttribute("class","crypt-btn");
@@ -152,8 +132,6 @@ class DOMobjectsActions{
         //var cryptingMessages = _CryptingMessages.encryptMessage.bind(this);            //  Метод кодрования исходного сообщения.
         
         encryptBtn.onclick = function(){    //  Обработчик нажатия на кнопку кодирования и отправки.
-            console.log("Click on fake button...");
-            
             //  Выполняем шифрование сообщения и замену исходного сообщения в поле ввода.
             _CryptingMessages.encryptMessage();     //  Шифрование сообщения.
             //  Ожидание необходимо для того, чтобы браузер успел вытащить ключ из локального хранилища.
@@ -216,7 +194,7 @@ class DOMobjectsActions{
         var label = document.getElementsByClassName("encrypt-label")[0];
         label.classList.toggle("crypt-" + state);
         document.getElementsByClassName("encrypt-chechbox")[0].checked = true;
-        console.log("Вкл/Выкл шифрования.");
+        //console.log("Вкл/Выкл шифрования.");
     }
     
 }
@@ -261,7 +239,7 @@ class CryptingMessages{
                     if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
                         var id = conversations[userID] || null;
                         SecretKey = id.secretToken;
-                        console.log("Секретный ключ получен - ", SecretKey);
+                        //console.log("Секретный ключ вытащен из локального храниилища - ", SecretKey);
                     }
                 });
                 setTimeout(function () {
@@ -282,7 +260,7 @@ class CryptingMessages{
            
             
         }else{
-            console.log("Поле ввода текста пустое!");
+            //console.log("Поле ввода текста пустое!");
         }
     }
     
@@ -656,7 +634,6 @@ class MainActions{
                     //  Устанавливаем состояние соединения в established.
                     LocalStorage.changeProperty("cryptState", "established", userID);
                     //  Изменяем состояние чекбокса.
-                    console.log("Поиск бага...Метка 2");
                     _DOMobjectsActions.changeCryptState("established");
                     //  Очищаем окно с уведомлением.
                     NotificationsAndMessaging.clearNotifyField();
@@ -753,7 +730,7 @@ class MainActions{
      * @returns {undefined}
      */
     successfullConnection(){
-        console.log("Шифрование успешно включено!");
+        //console.log("Шифрование успешно включено!");
     }
     
 }
@@ -906,7 +883,7 @@ class Listeners{
 
             if(conversations !== null && conversations[userID]){ //  Если диалог существует в локальном хранилище.
                 var id = conversations[userID] || null;
-                console.log(id.cryptState);
+                
                 switch (id.cryptState){
                     case "pending": //  Ожидается подтверждение собеседника.
                         _DOMobjectsActions.changeCryptState("pending");
@@ -1010,13 +987,10 @@ class Listeners{
                 
                 //  
                 if(context.onLoadTextfielListenerFlag === false && document.getElementsByClassName("encrypt-chechbox")[0].checked !== false){
-                    console.log("Запуск ожидания изменения содержимого текстового поля для создания фейковой кнопки шифрования. ");
+                    //console.log("Запуск ожидания изменения содержимого текстового поля для создания фейковой кнопки шифрования. ");
                     var upTime = this.updateTime + 100;
                     setTimeout(function(){
                         context.onLoadTextfielListenerFlag = true;
-                        
-                        
-                        
                     }, upTime);
                     //  Запуск ожидания изменения содержимого текстового поля для создания фейковой кнопки шифрования.
                         //var _DOMobjectsActions = new DOMobjectsActions;     //  Экземпляр класса работы с DOM страницы.
@@ -1029,7 +1003,7 @@ class Listeners{
                                     var id = conversations[userID] || null;
                                     if(id.cryptState === "established" || id.cryptState === "pending"){
                                          //  Запуск отбработкика отправленных сообщений.
-                                         console.log("2. Запускаем обработкик отправки и шифрования написанных сообщений.");
+                                         //console.log("Запускаем обработкик отправки и шифрования написанных сообщений.");
                                          _DOMobjectsActions.textFieldAddListener();   //  Запускаем обработкик отправки и шифрования написанных сообщений.
                                     } 
                                 }
@@ -1040,14 +1014,12 @@ class Listeners{
                         context.onLoadTextfielListenerFlag = false;
                         
                         // Если лиснер существует.
-                        _DOMobjectsActions.textFieldRemoveListener();
+                        
                         //  Убиваем лиснер события изменения содержимого текстового поля.
-                        
-                        
-                        console.log("Если лиснер существует. Убиваем лиснер события изменения содержимого текстового поля.");
+                        _DOMobjectsActions.textFieldRemoveListener();
                         
                     }else{
-                        console.log("Обработчик отправки и шифровки сообщений уже включен.");
+                        //console.log("Обработчик отправки и шифровки сообщений уже включен.");
                     }
                     
                 }
@@ -1065,6 +1037,34 @@ class Listeners{
             }
 
         }, this.updateTime);
+    }
+    
+    /**
+     * Метод вешает обработчик на клавишу Enter.
+     * Определяет состояние шифрования и переопределяет/оставляет функцию выполняемую клавишей.
+     * @returns {undefined}
+     */
+    keyEnterHandler(){
+        //  Метод переопределения обработчика отправки сообщения, нажатием клавиши Enter.
+        document.addEventListener("keydown", function (event) {
+            //  Если нажата клавиша Enter.
+            if (event.keyCode === 13) {
+                //  Если шифрование включено.
+                if(document.getElementsByClassName("encrypt-chechbox")[0].checked){
+                    //  Переопределение клавиши Enter.
+                    //console.log("Нажата клавиша Enter при включенном шифровании, необходимо переопределение!");
+                    //  Остановка всплытия.
+                    event.stopPropagation();
+                    //  Эмуляция клика по новому элементу отправки сообщения.
+                    var _DOMobjectsActions = new DOMobjectsActions(); //  Создаем экземпляр класса работы с DOM.
+                    var sendButton = document.getElementsByClassName("crypt-btn")[0];
+                    _DOMobjectsActions.simulateClick(sendButton);   //  Моделируем клик по элементу отправки сообщения.
+                }else{
+                    //  Шифрование выключено, переопределение клавиши Enter не нужно.
+                    //console.log("Шифрование выключено, переопределение клавиши Enter не нужно.");
+                }
+            }
+        }, true);
     }
     
     /**
