@@ -1,6 +1,11 @@
 
-
+/**
+ * Расширение стартует при загрузке страницы.
+ * @returns {undefined}
+ */
 window.onload = function(){
+    
+    console.log("VKcrypt module enabled.");
     
     //  Вывод содержимого локального хранилища.
     chrome.storage.local.get(function(storage){
@@ -8,14 +13,7 @@ window.onload = function(){
     });
     
     
-    //  Если в текстовом поле уже присутствует текст, сразу показываем кнопку шифрования и отправки.
-    if(document.getElementsByClassName("im-chat-input--text")[0].innerHTML !== ""){
-        console.log("Текстовое поле не пустое!");
-    }else{
-        console.log("Текстовое поле пустое!");
-    }
-    
-    
+    //  Создание экземпляра основного класса, данныей класс управляет всем функционалом расширения.
     var __Listeners = new Listeners();
     
     //  Запуск главного демона, обрабатывающего принятые сообщения, отправленные сообщения.
@@ -25,15 +23,15 @@ window.onload = function(){
     //  Необходим для корректной отправки зашифрованных сообщением нажатием клавиши Enter.
     __Listeners.keyEnterHandler();
     
-    //  Метод определяет начальное значение текстового поля ввода сообщения.
-
 };
 
 
 
 /**
  * Класс определяет методы взаимодействий с DOM.
- * @type type
+ * Содержит набор методов, позволяющих расширению обращаться и управлять не только нативными объектами, но и внешними.
+ * @type class
+ * 
  */
 class DOMobjectsActions{
     
@@ -44,9 +42,7 @@ class DOMobjectsActions{
         this.sendBTN = null;
         this.messageCounter = 0;
         this.imChatInputText = document.getElementsByClassName("im-chat-input--text")[0];        //  Элемент текстового поля, на него в дальнейшем вешается лиснер изменения содержимого.
-        
 
-        
         this.tmptextFieldListenerMethod = function(e){
             //  Устанавливаем значение переменных содержащих элементы DOM.
             this.setInnersVars();
