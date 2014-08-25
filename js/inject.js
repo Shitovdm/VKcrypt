@@ -540,8 +540,8 @@ class MainActions{
                 //  Кодирование открытого клюяа для передачи собеседнику.
                 var encodeOpenedKey = keyGeneration.encodeOpenedKey(A);
                 //  Передача ключей собеседнику.(код выполняется перед записью ключей в локальное хранилище.)
-                var messageContent = "[" + senderName + "]: Принимаю Ваше предложение. <br> Первичные открытые ключи шифрования: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
-                messageContent += "<br>Открытый ключ шифрования:<br>" + encodeOpenedKey + "<br>Ожидаю открытый ключ собеседника.";
+                var messageContent = "[" + senderName + "]: Accepting Your offer. <br> Primary public encryption keys: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
+                messageContent += "<br>Public encrypt key: <br>" + encodeOpenedKey + "<br>Waiting for interlocutor's public key.";
                 NotificationsAndMessaging.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
             })
             .catch(error => console.error(error));
@@ -605,7 +605,7 @@ class MainActions{
                     //  Кодирование открытого клюяа для передачи собеседнику.
                     var encodeOpenedKey = keyGeneration.encodeOpenedKey(B);
                     //  Передача расчитанного открытого ключа собеседнику.
-                    var messageContent = "[" + senderName + "]: Открытый ключ шифрования: <br>" + encodeOpenedKey;
+                    var messageContent = "[" + senderName + "]: Public encrypt key: <br>" + encodeOpenedKey;
                     NotificationsAndMessaging.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.  
                 })
             .then(function(){   //  Расчет секретного ключа S2.
@@ -690,9 +690,11 @@ class MainActions{
                                 })
                             .then(function(){   //  Создание секретного ключа b.
                                     //  Отправляем собеседнику уведомление о том, что шифрование включено.
-                                    var messageContent = "[" + senderName + "]: Защищённая передача данных установлена!<br>";
-                                    messageContent += "ВНИМАНИЕ!<br>";
-                                    messageContent += "Отключив шифрование, вы навсегда потеряете возможность расшифровать сообщения, отправленные в зашифрованном виде!<br>";
+                                    var messageContent = "[" + senderName + "]: Secure connection established!<br>";
+                                    //  Внимание!
+                                    messageContent += "Attention!<br>";
+                                    //  Отключив шифрование, вы навсегда потеряете возможность расшифровать сообщения, отправленные в зашифрованном виде!
+                                    messageContent += "Once turned off the encryption you will lose the possibility to decrypt previous messages for ever!<br>";
                                     NotificationsAndMessaging.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
                                     //console.log("Собеседнику отправлено уведомление о том, что защищённая передача данных установлена.");
                                     //  Изменяем состояние чекбокса.
@@ -765,26 +767,31 @@ class MessageHandler{
                 switch (this.lastMessage.split("<")[0]){
                     
                     //  Команда начала создания первичных открытых ключей.
-                    case "[" + this.userName + "]: Предлагаю Вам перейти к защищенной беседе. ":
+                    //  Предлагаю Вам перейти к защищенной беседе. 
+                    case "[" + this.userName + "]: I offer You a secure connection.":
                         mainActions.invitation(this.lastMessage);
                         break;
                         
                     //  Команда приема открытого ключа собеседника.
-                    case "[" + this.userName + "]: Принимаю Ваше предложение. ":
+                    //  Принимаю Ваше предложение. 
+                    case "[" + this.userName + "]: Accepting Your offer.":
                         mainActions.acceptance(this.lastMessage);
                         break;
                         
-                    case "[" + this.userName + "]: Открытый ключ шифрования: ":
+                    //  Открытый ключ шифрования:
+                    case "[" + this.userName + "]: Public encrypt key: ":
                         mainActions.keysReception(this.lastMessage);
                         break;
                     
                     //  Инициатору шифрованной беседы.
-                    case "[" + this.userName + "]: Защищённая передача данных установлена!":
+                    //  Защищённая передача данных установлена!
+                    case "[" + this.userName + "]: Secure connection established!":
                         mainActions.successfullConnection();
                         break;
                     
                     //  Если собеседник закрыл защищенный канал связи.
-                    case "[" + this.userName + "]: Разрываю защищенное соединение!":
+                    //  Разрываю защищенное соединение...
+                    case "[" + this.userName + "]: Severing secure connection...":
                         mainActions.breakConnection();
                         break;
                 }   
@@ -805,11 +812,11 @@ class MessageHandler{
 
         //  Если это не сообщение подтверждения установки шифрования или его окончания или в сообщении нет "]:".
         if( ((messageContent.split("]:")[1]) === undefined) ||  
-            (   ((messageContent.split("]:")[1]).split("<br>")[0] !== " Предлагаю Вам перейти к защищенной беседе. ") &&
-                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Принимаю Ваше предложение. ") &&
-                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Открытый ключ шифрования: ") &&
-                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Защищённая передача данных установлена!") &&
-                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Разрываю защищенное соединение!"))  ){
+            (   ((messageContent.split("]:")[1]).split("<br>")[0] !== " I offer You a secure connection.") &&
+                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Accepting Your offer.") &&
+                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Public encrypt key: ") &&
+                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Secure connection established!") &&
+                ((messageContent.split("]:")[1]).split("<br>")[0] !== " Severing secure connection..."))  ){
 
 
             //  Если состояние шифрования имеет статус established.
@@ -856,7 +863,7 @@ class Listeners{
         this.container = document.getElementsByClassName("im-page--title-wrapper")["0"];
         var stateCheckbox = document.createElement("div");
         stateCheckbox.setAttribute("class","encrypt-checkbox-field");
-        stateCheckbox.setAttribute("title","Включить/Отключить шифрование");
+        stateCheckbox.setAttribute("title","Turn ON/OFF encryption");
         this.container.appendChild(stateCheckbox); 
 
         var inputTag = document.createElement("input");
@@ -953,7 +960,7 @@ class Listeners{
                 
                 //  Посылаем уведомление собеседнику о завершении шифрованного соединения.
                 var senderName = document.getElementsByClassName("top_profile_img")[0].getAttribute("alt");  //  Имя отправителя.
-                var messageContent = "[" + senderName + "]: Разрываю защищенное соединение!";
+                var messageContent = "[" + senderName + "]: Severing secure connection...";
                 notificationsAndMessaging.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
             }
         }; 
@@ -1134,7 +1141,8 @@ class NotificationsAndMessaging{
     interlocutorNotify(){
         var senderInfo = document.getElementsByClassName("top_profile_img")[0];
         var sender = senderInfo.getAttribute("alt");  //  Имя отправителя.
-        var notification = "[" + sender + "]: Предлагаю Вам перейти к защищенной беседе. <br> Для начала включите шифрование.";  //  Текст сообщения.
+        //  Для начала включите шифрование.
+        var notification = "[" + sender + "]: I offer You a secure connection. <br> First of all turn on encryption.";  //  Текст сообщения.
         
         var _DOMobjectsActions = new DOMobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         
@@ -1157,9 +1165,10 @@ class NotificationsAndMessaging{
         var sendButton = document.getElementsByClassName("im-page--fixer")[0];     //  Элемент .im-page--fixer ._im_typer_c находится всегда внизу страницы.
         
         sendButton.classList.add("notify-bg");
+        //  Собеседнику отправлено уведомление. Зашифрованная передача данных начнется автоматически после включения шифрования собеседником.
         sendButton.innerHTML = 
                 '<div class="notify-auto-crypt">'
-                    +'Собеседнику отправлено уведомление. Зашифрованная передача данных начнется автоматически после включения шифрования собеседником.'
+                    +'Notification has been sent to interlocutor. Encrypted messaging will start automatically once your interlocutor turns on encryption.'
                 +'</div>'
                 + '<div class="hide-auto-crypt-notify">'
                     +'&#10006;'
