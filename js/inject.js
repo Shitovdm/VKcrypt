@@ -1142,7 +1142,7 @@ class NotificationsAndMessaging{
         var senderInfo = document.getElementsByClassName("top_profile_img")[0];
         var sender = senderInfo.getAttribute("alt");  //  Имя отправителя.
         //  Для начала включите шифрование.
-        var notification = "[" + sender + "]: I offer You a secure connection. <br> First of all turn on encryption.";  //  Текст сообщения.
+        var notification = "[" + sender + "]: I offer You a secure connection.<br> First of all turn on encryption.";  //  Текст сообщения.
         
         var _DOMobjectsActions = new DOMobjectsActions(); //  Создаем экземпляр класса работы с DOM.
         
