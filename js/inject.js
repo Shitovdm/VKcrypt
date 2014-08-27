@@ -540,7 +540,7 @@ class MainActions{
                 //  Кодирование открытого клюяа для передачи собеседнику.
                 var encodeOpenedKey = keyGeneration.encodeOpenedKey(A);
                 //  Передача ключей собеседнику.(код выполняется перед записью ключей в локальное хранилище.)
-                var messageContent = "[" + senderName + "]: Accepting Your offer. <br> Primary public encryption keys: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
+                var messageContent = "[" + senderName + "]: Accepting Your offer.<br> Primary public encryption keys: <br>" + encodePublicKeys.p + "<br>" + encodePublicKeys.g;
                 messageContent += "<br>Public encrypt key: <br>" + encodeOpenedKey + "<br>Waiting for interlocutor's public key.";
                 NotificationsAndMessaging.sendServiceMessage(messageContent); //  Отправка уведомления собеседнику.
             })
