@@ -22,9 +22,9 @@
   
 ### Пример работы
 
-![screen](https://raw.githubusercontent.com/Shitovdm/VKcrypt/master/service/img/screen/decrypted.png)  
+![screen](https://raw.githubusercontent.com/Shitovdm/VKcrypt/master/img/screen/decrypted.png)  
   
-![screen](https://raw.githubusercontent.com/Shitovdm/VKcrypt/master/service/img/screen/encrypted.png)    
+![screen](https://raw.githubusercontent.com/Shitovdm/VKcrypt/master/img/screen/encrypted.png)    
 
 **Я специально не стал загружать расширение в магазин Chrome, чтобы вы могли убедиться в его безопасности. Поэтому при перезагрузке браузера, Chrome будет вам постоянно напоминать о включенном режиме разработчика.**
   
