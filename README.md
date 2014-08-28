@@ -22,10 +22,15 @@
   
 ### Пример работы
 
+### Диалог с включенным дополнением  
+
 ![screen](https://raw.githubusercontent.com/Shitovdm/VKcrypt/master/img/screen/decrypted.png)  
   
-![screen](https://raw.githubusercontent.com/Shitovdm/VKcrypt/master/img/screen/encrypted.png)    
 
+### Диалог, созданный дополнением, но отлюченным в данный момент  
+
+![screen](https://raw.githubusercontent.com/Shitovdm/VKcrypt/master/img/screen/encrypted.png)    
+  
 **Я специально не стал загружать расширение в магазин Chrome, чтобы вы могли убедиться в его безопасности. Поэтому при перезагрузке браузера, Chrome будет вам постоянно напоминать о включенном режиме разработчика.**
   
 **Не скачивайте подобное расширение из подозрительных истоников или тчательно проверяйте его исходный код**
